@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ChevronDown, ChevronRight, Folder, File, Clock, Star, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,9 @@ const categories: Category[] = [
     name: "Recursos Humanos",
     icon: "👥",
     expanded: true,
+    pages: [
+      { id: "rh-manual-geral", title: "Manual Geral RH", lastModified: "2024-01-22", isNew: true },
+    ],
     children: [
       {
         id: "rh-beneficios",
@@ -55,6 +57,7 @@ const categories: Category[] = [
         name: "Políticas",
         icon: "📋",
         expanded: false,
+        pages: [],
         children: [
           {
             id: "rh-codigo-conduta",
@@ -67,9 +70,6 @@ const categories: Category[] = [
           }
         ]
       }
-    ],
-    pages: [
-      { id: "rh-manual-geral", title: "Manual Geral RH", lastModified: "2024-01-22", isNew: true },
     ]
   },
   {
@@ -77,6 +77,9 @@ const categories: Category[] = [
     name: "Tecnologia da Informação",
     icon: "💻",
     expanded: true,
+    pages: [
+      { id: "ti-inventario", title: "Inventário", lastModified: "2024-01-18" },
+    ],
     children: [
       {
         id: "ti-seguranca",
@@ -87,9 +90,6 @@ const categories: Category[] = [
           { id: "ti-vpn", title: "Configuração VPN", lastModified: "2024-01-18" },
         ]
       }
-    ],
-    pages: [
-      { id: "ti-inventario", title: "Inventário", lastModified: "2024-01-18" },
     ]
   }
 ];
