@@ -176,33 +176,94 @@
   .prose em {
     @apply italic;
   }
+
+  /* Line clamp utility */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--muted));
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Glassmorphism effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .glass {
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 50%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }
 
 @layer utilities {
   .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
+    animation: fadeIn 0.6s ease-out forwards;
   }
   
   .animate-slide-in-left {
-    animation: slideInLeft 0.4s ease-out forwards;
+    animation: slideInLeft 0.5s ease-out forwards;
   }
   
   .animate-slide-in-right {
-    animation: slideInRight 0.4s ease-out forwards;
+    animation: slideInRight 0.5s ease-out forwards;
   }
   
   .animate-bounce-in {
-    animation: bounceIn 0.6s ease-out forwards;
+    animation: bounceIn 0.7s ease-out forwards;
   }
   
   .animate-scale-in {
-    animation: scaleIn 0.3s ease-out forwards;
+    animation: scaleIn 0.4s ease-out forwards;
+  }
+
+  .animate-accordion-down {
+    animation: accordionDown 0.3s ease-out forwards;
+  }
+
+  .animate-accordion-up {
+    animation: accordionUp 0.3s ease-out forwards;
   }
   
   @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(30px);
     }
     to {
       opacity: 1;
@@ -213,7 +274,7 @@
   @keyframes slideInLeft {
     from {
       opacity: 0;
-      transform: translateX(-30px);
+      transform: translateX(-40px);
     }
     to {
       opacity: 1;
@@ -224,7 +285,7 @@
   @keyframes slideInRight {
     from {
       opacity: 0;
-      transform: translateX(30px);
+      transform: translateX(40px);
     }
     to {
       opacity: 1;
@@ -238,7 +299,7 @@
       transform: scale(0.3);
     }
     50% {
-      transform: scale(1.05);
+      transform: scale(1.1);
     }
     70% {
       transform: scale(0.9);
@@ -252,7 +313,7 @@
   @keyframes scaleIn {
     from {
       opacity: 0;
-      transform: scale(0.9);
+      transform: scale(0.8);
     }
     to {
       opacity: 1;
@@ -260,44 +321,138 @@
     }
   }
 
-  /* Animações personalizadas para a Wiki */
+  @keyframes accordionDown {
+    from {
+      opacity: 0;
+      height: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      height: auto;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes accordionUp {
+    from {
+      opacity: 1;
+      height: auto;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      height: 0;
+      transform: translateY(-10px);
+    }
+  }
+
+  /* Wiki-specific animations */
   .wiki-card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1;
+    @apply transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-2 hover:scale-[1.02];
   }
   
   .wiki-nav-item {
-    @apply transition-all duration-200 hover:bg-accent hover:text-accent-foreground rounded-md;
+    @apply transition-all duration-200 hover:bg-accent hover:text-accent-foreground rounded-md hover:shadow-sm;
   }
   
   .wiki-button-bounce {
-    @apply transition-transform duration-150 active:scale-95;
+    @apply transition-all duration-150 active:scale-95 hover:shadow-md;
+  }
+
+  .wiki-glow {
+    @apply shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-shadow duration-300;
   }
   
-  /* Estilos para o editor */
+  /* Editor styles */
   .editor-toolbar {
-    @apply flex items-center gap-1 p-2 border-b bg-muted/30 rounded-t-md;
+    @apply flex items-center gap-1 p-3 border-b bg-muted/30 rounded-t-md backdrop-blur-sm;
   }
   
   .editor-content {
-    @apply min-h-[400px] p-4 focus:outline-none prose prose-sm dark:prose-invert max-w-none;
+    @apply min-h-[500px] p-6 focus:outline-none prose prose-sm dark:prose-invert max-w-none transition-all duration-200;
   }
   
-  /* Loading states */
+  /* Loading states with shimmer */
   .skeleton {
-    @apply bg-muted animate-pulse rounded;
+    @apply bg-muted animate-pulse rounded relative overflow-hidden;
+  }
+
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
   }
   
-  /* Responsive grid utilities */
+  /* Responsive utilities */
   .grid-auto-fit {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
   
   .grid-auto-fill {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+
+  /* Floating elements */
+  .floating {
+    animation: floating 3s ease-in-out infinite;
+  }
+
+  @keyframes floating {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Pulse glow effect */
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(var(--primary), 0.3);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(var(--primary), 0.6);
+    }
+  }
+
+  /* Interactive highlights */
+  .highlight-on-hover {
+    @apply relative;
+  }
+
+  .highlight-on-hover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 0%, hsl(var(--primary) / 0.1) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+  }
+
+  .highlight-on-hover:hover::before {
+    opacity: 1;
   }
 }
 
-/* Scrollbar personalizada */
+/* Enhanced scrollbar for all elements */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -309,16 +464,30 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: linear-gradient(45deg, hsl(var(--muted-foreground) / 0.3), hsl(var(--muted-foreground) / 0.5));
   border-radius: 4px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: linear-gradient(45deg, hsl(var(--muted-foreground) / 0.5), hsl(var(--muted-foreground) / 0.7));
 }
 
-/* Suporte para Firefox */
+/* Firefox scrollbar */
 * {
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--muted));
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Selection styles */
+::selection {
+  background-color: hsl(var(--primary) / 0.2);
+  color: hsl(var(--primary-foreground));
 }
