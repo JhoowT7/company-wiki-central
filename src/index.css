@@ -102,15 +102,23 @@
   }
   
   .prose {
-    @apply text-foreground;
+    @apply text-foreground max-w-none;
+  }
+  
+  .prose h1 {
+    @apply text-3xl font-bold mt-8 mb-6 text-foreground;
   }
   
   .prose h2 {
-    @apply text-2xl font-bold mt-8 mb-4;
+    @apply text-2xl font-bold mt-8 mb-4 text-foreground;
   }
   
   .prose h3 {
-    @apply text-xl font-semibold mt-6 mb-3;
+    @apply text-xl font-semibold mt-6 mb-3 text-foreground;
+  }
+  
+  .prose h4 {
+    @apply text-lg font-semibold mt-4 mb-2 text-foreground;
   }
   
   .prose ul {
@@ -122,29 +130,73 @@
   }
   
   .prose li {
-    @apply mb-2;
+    @apply mb-2 leading-7;
   }
   
   .prose p {
-    @apply mb-4 leading-7;
+    @apply mb-4 leading-7 text-foreground;
+  }
+  
+  .prose blockquote {
+    @apply border-l-4 border-primary pl-4 italic my-4 text-muted-foreground;
+  }
+  
+  .prose code {
+    @apply bg-muted px-2 py-1 rounded text-sm font-mono;
+  }
+  
+  .prose pre {
+    @apply bg-muted p-4 rounded-lg overflow-x-auto my-4;
   }
   
   .prose table {
-    @apply w-full border-collapse my-4;
+    @apply w-full border-collapse my-6 text-sm;
   }
   
   .prose th {
-    @apply bg-muted border border-border p-3 text-left font-semibold;
+    @apply bg-muted border border-border p-3 text-left font-semibold text-foreground;
   }
   
   .prose td {
-    @apply border border-border p-3;
+    @apply border border-border p-3 text-foreground;
+  }
+  
+  .prose img {
+    @apply rounded-lg shadow-md my-4 max-w-full h-auto;
+  }
+  
+  .prose a {
+    @apply text-primary hover:text-primary/80 underline;
+  }
+  
+  .prose strong {
+    @apply font-bold text-foreground;
+  }
+  
+  .prose em {
+    @apply italic;
   }
 }
 
 @layer utilities {
   .animate-fade-in {
-    animation: fadeIn 0.5s ease-out;
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+  
+  .animate-slide-in-left {
+    animation: slideInLeft 0.4s ease-out forwards;
+  }
+  
+  .animate-slide-in-right {
+    animation: slideInRight 0.4s ease-out forwards;
+  }
+  
+  .animate-bounce-in {
+    animation: bounceIn 0.6s ease-out forwards;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
   }
   
   @keyframes fadeIn {
@@ -157,4 +209,116 @@
       transform: translateY(0);
     }
   }
+  
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes bounceIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Animações personalizadas para a Wiki */
+  .wiki-card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1;
+  }
+  
+  .wiki-nav-item {
+    @apply transition-all duration-200 hover:bg-accent hover:text-accent-foreground rounded-md;
+  }
+  
+  .wiki-button-bounce {
+    @apply transition-transform duration-150 active:scale-95;
+  }
+  
+  /* Estilos para o editor */
+  .editor-toolbar {
+    @apply flex items-center gap-1 p-2 border-b bg-muted/30 rounded-t-md;
+  }
+  
+  .editor-content {
+    @apply min-h-[400px] p-4 focus:outline-none prose prose-sm dark:prose-invert max-w-none;
+  }
+  
+  /* Loading states */
+  .skeleton {
+    @apply bg-muted animate-pulse rounded;
+  }
+  
+  /* Responsive grid utilities */
+  .grid-auto-fit {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  .grid-auto-fill {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Suporte para Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--muted));
 }
