@@ -1,142 +1,147 @@
 
+import { useState, useEffect } from "react";
+import { ArrowLeft, Edit, Heart, Share, Clock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, User, Edit, Clock, FileText } from "lucide-react";
 
 interface PageViewProps {
   pageId: string;
   onBack: () => void;
+  onEdit: () => void;
 }
 
-// Mock data for demonstration
-const pageData: Record<string, any> = {
-  "rh-beneficios": {
-    title: "Benefícios",
-    category: "Recursos Humanos",
-    lastModified: "15 de Janeiro, 2024",
-    author: "Maria Silva",
-    content: `
-      <h2>Plano de Benefícios da Empresa</h2>
-      <p>Nossa empresa oferece um pacote completo de benefícios para garantir o bem-estar e a qualidade de vida dos nossos colaboradores.</p>
+interface PageData {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  author: string;
+  lastModified: string;
+  views: number;
+  isFavorite: boolean;
+}
+
+export function PageView({ pageId, onBack, onEdit }: PageViewProps) {
+  const [page, setPage] = useState<PageData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadPage(pageId);
+  }, [pageId]);
+
+  const loadPage = async (id: string) => {
+    setIsLoading(true);
+    try {
+      // Simulação de carregamento da página
+      const mockPage: PageData = {
+        id,
+        title: "Boas Práticas de Segurança",
+        content: `
+          <h2>Introdução</h2>
+          <p>Este documento apresenta as principais boas práticas de segurança que devem ser seguidas por todos os colaboradores da empresa.</p>
+          
+          <h3>Senhas Seguras</h3>
+          <ul>
+            <li>Use senhas com pelo menos 12 caracteres</li>
+            <li>Inclua letras maiúsculas, minúsculas, números e símbolos</li>
+            <li>Não reutilize senhas em diferentes sistemas</li>
+            <li>Use um gerenciador de senhas</li>
+          </ul>
+          
+          <h3>Phishing e E-mails Suspeitos</h3>
+          <p>Sempre verifique o remetente antes de clicar em links ou baixar anexos. Em caso de dúvida, entre em contato com o TI.</p>
+          
+          <h3>Atualizações de Software</h3>
+          <p>Mantenha sempre seus sistemas e aplicativos atualizados com as últimas versões de segurança.</p>
+        `,
+        category: "TI",
+        author: "João Silva",
+        lastModified: "2024-01-20",
+        views: 189,
+        isFavorite: false
+      };
       
-      <h3>🏥 Benefícios de Saúde</h3>
-      <ul>
-        <li><strong>Plano de Saúde Completo:</strong> Cobertura nacional com rede credenciada ampla</li>
-        <li><strong>Plano Odontológico:</strong> Incluindo procedimentos preventivos e corretivos</li>
-        <li><strong>Seguro de Vida:</strong> Cobertura para funcionários e dependentes</li>
-      </ul>
-
-      <h3>💰 Benefícios Financeiros</h3>
-      <ul>
-        <li><strong>Vale Refeição:</strong> R$ 35,00 por dia útil</li>
-        <li><strong>Vale Transporte:</strong> 100% do custo do transporte público</li>
-        <li><strong>Participação nos Lucros:</strong> Distribuição anual baseada nos resultados</li>
-      </ul>
-
-      <h3>🎓 Desenvolvimento Profissional</h3>
-      <ul>
-        <li><strong>Verba para Cursos:</strong> Até R$ 3.000 anuais para capacitação</li>
-        <li><strong>Licença Educacional:</strong> Horário flexível para estudos</li>
-        <li><strong>Mentoria Interna:</strong> Programa de desenvolvimento de carreira</li>
-      </ul>
-
-      <div style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
-        <p><strong>📋 Importante:</strong> Para mais informações sobre como solicitar benefícios, entre em contato com o departamento de RH.</p>
-      </div>
-    `
-  },
-  "ti-sistemas": {
-    title: "Acesso a Sistemas",
-    category: "Tecnologia da Informação",
-    lastModified: "20 de Janeiro, 2024",
-    author: "João Santos",
-    content: `
-      <h2>Guia de Acesso aos Sistemas da Empresa</h2>
-      <p>Este guia contém informações essenciais para acessar todos os sistemas corporativos de forma segura e eficiente.</p>
-      
-      <h3>🔐 Sistemas Principais</h3>
-      <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
-        <tr style="background: #f9fafb;">
-          <th style="border: 1px solid #e5e7eb; padding: 0.75rem; text-align: left;">Sistema</th>
-          <th style="border: 1px solid #e5e7eb; padding: 0.75rem; text-align: left;">URL</th>
-          <th style="border: 1px solid #e5e7eb; padding: 0.75rem; text-align: left;">Função</th>
-        </tr>
-        <tr>
-          <td style="border: 1px solid #e5e7eb; padding: 0.75rem;">ERP Corporativo</td>
-          <td style="border: 1px solid #e5e7eb; padding: 0.75rem;">erp.empresa.com</td>
-          <td style="border: 1px solid #e5e7eb; padding: 0.75rem;">Gestão financeira e operacional</td>
-        </tr>
-        <tr>
-          <td style="border: 1px solid #e5e7eb; padding: 0.75rem;">CRM</td>
-          <td style="border: 1px solid #e5e7eb; padding: 0.75rem;">crm.empresa.com</td>
-          <td style="border: 1px solid #e5e7eb; padding: 0.75rem;">Gestão de clientes</td>
-        </tr>
-        <tr>
-          <td style="border: 1px solid #e5e7eb; padding: 0.75rem;">Portal RH</td>
-          <td style="border: 1px solid #e5e7eb; padding: 0.75rem;">rh.empresa.com</td>
-          <td style="border: 1px solid #e5e7eb; padding: 0.75rem;">Recursos humanos</td>
-        </tr>
-      </table>
-
-      <h3>🔑 Primeiro Acesso</h3>
-      <ol>
-        <li>Acesse o sistema desejado usando a URL correspondente</li>
-        <li>Use seu CPF como login inicial</li>
-        <li>A senha temporária será enviada por email</li>
-        <li>Altere a senha no primeiro login</li>
-      </ol>
-
-      <div style="background: #fef3c7; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
-        <p><strong>⚠️ Segurança:</strong> Nunca compartilhe suas credenciais de acesso. Em caso de suspeita de comprometimento, altere sua senha imediatamente.</p>
-      </div>
-    `
-  }
-};
-
-export function PageView({ pageId, onBack }: PageViewProps) {
-  const page = pageData[pageId] || {
-    title: "Página não encontrada",
-    category: "Erro",
-    lastModified: "N/A",
-    author: "Sistema",
-    content: "<p>Esta página ainda não foi criada ou não existe.</p>"
+      setPage(mockPage);
+    } catch (error) {
+      console.error("Erro ao carregar página:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  const toggleFavorite = () => {
+    if (page) {
+      setPage({ ...page, isFavorite: !page.isFavorite });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-muted rounded w-1/4 mb-4"></div>
+          <div className="h-4 bg-muted rounded w-1/2 mb-6"></div>
+          <div className="space-y-2">
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded w-5/6"></div>
+            <div className="h-4 bg-muted rounded w-4/6"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!page) {
+    return (
+      <div className="p-6">
+        <p>Página não encontrada.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="sticky top-16 z-10 bg-background/95 backdrop-blur border-b">
-        <div className="flex items-center justify-between p-6">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={onBack}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
+            
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-2xl font-bold">{page.title}</h1>
-                <Badge variant="secondary">{page.category}</Badge>
-              </div>
+              <h1 className="text-xl font-semibold">{page.title}</h1>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {page.lastModified}
-                </div>
-                <div className="flex items-center gap-1">
+                <span className="flex items-center gap-1">
                   <User className="h-3 w-3" />
                   {page.author}
-                </div>
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {page.lastModified}
+                </span>
+                <Badge variant="secondary">{page.category}</Badge>
               </div>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Clock className="h-4 w-4 mr-2" />
-              Histórico
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={toggleFavorite}
+              className={page.isFavorite ? "text-red-500" : ""}
+            >
+              <Heart className={`h-4 w-4 ${page.isFavorite ? "fill-current" : ""}`} />
             </Button>
-            <Button size="sm">
+            
+            <Button variant="ghost" size="sm">
+              <Share className="h-4 w-4" />
+            </Button>
+            
+            <Button size="sm" onClick={onEdit}>
               <Edit className="h-4 w-4 mr-2" />
               Editar
             </Button>
@@ -145,35 +150,21 @@ export function PageView({ pageId, onBack }: PageViewProps) {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto p-6">
-        <Card>
-          <CardContent className="p-8">
-            <div 
-              className="prose prose-gray dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: page.content }}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Related Pages */}
-        <Card className="mt-6">
+      <div className="flex-1 p-6">
+        <Card className="max-w-4xl mx-auto">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Páginas Relacionadas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg border hover:shadow-md transition-all cursor-pointer hover-scale">
-                <h4 className="font-medium mb-2">Regras Internas</h4>
-                <p className="text-sm text-muted-foreground">Normas e políticas da empresa</p>
-              </div>
-              <div className="p-4 rounded-lg border hover:shadow-md transition-all cursor-pointer hover-scale">
-                <h4 className="font-medium mb-2">Políticas de Férias</h4>
-                <p className="text-sm text-muted-foreground">Procedimentos para solicitação de férias</p>
+            <div className="flex items-center justify-between">
+              <CardTitle>{page.title}</CardTitle>
+              <div className="text-sm text-muted-foreground">
+                {page.views} visualizações
               </div>
             </div>
+          </CardHeader>
+          <CardContent>
+            <div 
+              className="prose dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: page.content }}
+            />
           </CardContent>
         </Card>
       </div>

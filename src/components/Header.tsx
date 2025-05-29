@@ -1,9 +1,9 @@
 
+import React, { useState } from "react";
 import { Search, Menu, Book, Settings, User, Plus, FolderTree } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "./ThemeToggle";
-import { useState } from "react";
 import { useDebounce } from "@/utils/debounce";
 import { 
   DropdownMenu, 
@@ -14,11 +14,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getCurrentUser, removeAuthToken } from "@/utils/auth";
 
+type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories';
+
 interface HeaderProps {
   onToggleSidebar: () => void;
   sidebarOpen: boolean;
-  onViewChange: (view: string) => void;
-  currentView: string;
+  onViewChange: (view: ViewMode) => void;
+  currentView: ViewMode;
 }
 
 export function Header({ onToggleSidebar, sidebarOpen, onViewChange, currentView }: HeaderProps) {

@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 
+type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories';
+
 interface SidebarProps {
   isOpen: boolean;
   onPageSelect: (pageId: string) => void;
   selectedPage: string | null;
+  onViewChange: (view: ViewMode) => void;
 }
 
 interface Category {
@@ -69,7 +72,7 @@ const categories: Category[] = [
   }
 ];
 
-export function Sidebar({ isOpen, onPageSelect, selectedPage }: SidebarProps) {
+export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: SidebarProps) {
   const [expandedCategories, setExpandedCategories] = useState<string[]>(["rh", "ti"]);
 
   const toggleCategory = (categoryId: string) => {

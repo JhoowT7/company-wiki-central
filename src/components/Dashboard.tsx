@@ -1,124 +1,148 @@
 
+import { useState } from "react";
+import { Search, Clock, Star, TrendingUp, FileText, Plus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, TrendingUp, Users, FileText, Search, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface DashboardProps {
   onPageSelect: (pageId: string) => void;
+  onNewPage: () => void;
 }
 
-const quickStats = [
-  { title: "Total de Páginas", value: "127", icon: FileText, trend: "+12" },
-  { title: "Páginas Editadas (30d)", value: "34", icon: TrendingUp, trend: "+8" },
-  { title: "Usuários Ativos", value: "23", icon: Users, trend: "+3" },
-  { title: "Visualizações (30d)", value: "1,247", icon: Search, trend: "+156" },
+interface RecentPage {
+  id: string;
+  title: string;
+  category: string;
+  lastModified: string;
+  author: string;
+  isNew?: boolean;
+}
+
+interface PopularPage {
+  id: string;
+  title: string;
+  views: number;
+  category: string;
+}
+
+const recentPages: RecentPage[] = [
+  {
+    id: "ti-sistemas",
+    title: "Acesso a Sistemas",
+    category: "TI",
+    lastModified: "2024-01-20",
+    author: "Admin",
+    isNew: true
+  },
+  {
+    id: "com-vendas",
+    title: "Estratégias de Vendas",
+    category: "Comercial",
+    lastModified: "2024-01-22",
+    author: "João Silva"
+  },
+  {
+    id: "temp-contratos",
+    title: "Contratos",
+    category: "Templates",
+    lastModified: "2024-01-19",
+    author: "Maria Santos"
+  }
 ];
 
-const recentActivity = [
-  { title: "Acesso a Sistemas", category: "TI", action: "criada", time: "há 2 horas", isNew: true },
-  { title: "Estratégias de Vendas", category: "Comercial", action: "atualizada", time: "há 4 horas" },
-  { title: "Contratos", category: "Templates", action: "revisada", time: "há 1 dia" },
-  { title: "Benefícios", category: "RH", action: "comentada", time: "há 2 dias" },
+const popularPages: PopularPage[] = [
+  { id: "rh-beneficios", title: "Benefícios", views: 245, category: "RH" },
+  { id: "ti-seguranca", title: "Boas Práticas de Segurança", views: 189, category: "TI" },
+  { id: "com-atendimento", title: "Scripts de Atendimento", views: 156, category: "Comercial" }
 ];
 
-const popularPages = [
-  { title: "Acesso a Sistemas", category: "TI", views: 89 },
-  { title: "Benefícios", category: "RH", views: 76 },
-  { title: "Scripts de Atendimento", category: "Comercial", views: 54 },
-  { title: "Boas Práticas de Segurança", category: "TI", views: 43 },
+const stats = [
+  { label: "Total de Páginas", value: "127", icon: FileText, trend: "+12%" },
+  { label: "Visualizações Hoje", value: "1,234", icon: TrendingUp, trend: "+8%" },
+  { label: "Usuários Ativos", value: "23", icon: Star, trend: "+3%" },
 ];
 
-const categories = [
-  { id: "rh", name: "Recursos Humanos", icon: "👥", pages: 12, color: "bg-blue-500" },
-  { id: "ti", name: "Tecnologia da Informação", icon: "💻", pages: 28, color: "bg-green-500" },
-  { id: "comercial", name: "Comercial", icon: "📈", pages: 15, color: "bg-purple-500" },
-  { id: "templates", name: "Templates e Documentos", icon: "📄", pages: 72, color: "bg-orange-500" },
-];
+export function Dashboard({ onPageSelect, onNewPage }: DashboardProps) {
+  const [searchQuery, setSearchQuery] = useState("");
 
-export function Dashboard({ onPageSelect }: DashboardProps) {
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Bem-vindo à Wiki Empresarial - Centralize e organize todo o conhecimento da empresa</p>
+          <h1 className="text-3xl font-bold">Wiki Empresarial</h1>
+          <p className="text-muted-foreground">
+            Bem-vindo à base de conhecimento da sua empresa
+          </p>
         </div>
-        <Button className="hover-scale">
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Página
-        </Button>
+        
+        <div className="flex gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar páginas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-64"
+            />
+          </div>
+          <Button onClick={onNewPage}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Página
+          </Button>
+        </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {quickStats.map((stat, index) => (
-          <Card key={index} className="hover-scale">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {stats.map((stat, index) => (
+          <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
               <stat.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
               <p className="text-xs text-muted-foreground">
-                <span className="text-green-600">+{stat.trend}</span> em relação ao mês anterior
+                <span className="text-green-600">{stat.trend}</span> desde ontem
               </p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Categories Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Categorias</CardTitle>
-          <CardDescription>Explore o conteúdo organizado por departamentos</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {categories.map((category) => (
-              <div
-                key={category.id}
-                className="p-4 rounded-lg border hover:shadow-md transition-all cursor-pointer hover-scale"
-                onClick={() => console.log(`Navigate to ${category.id}`)}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-10 h-10 rounded-lg ${category.color} flex items-center justify-center text-white text-lg`}>
-                    {category.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{category.name}</h3>
-                    <p className="text-sm text-muted-foreground">{category.pages} páginas</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activity */}
+        {/* Recent Pages */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Atividade Recente
+              Páginas Recentes
             </CardTitle>
-            <CardDescription>Últimas atualizações e criações</CardDescription>
+            <CardDescription>
+              Últimas páginas editadas ou criadas
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+            {recentPages.map((page) => (
+              <div
+                key={page.id}
+                className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => onPageSelect(page.id)}
+              >
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{activity.title}</span>
-                    {activity.isNew && <Badge variant="secondary">Nova</Badge>}
+                    <h4 className="font-medium">{page.title}</h4>
+                    {page.isNew && <Badge variant="secondary">Novo</Badge>}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {activity.category} • {activity.action} • {activity.time}
+                    {page.category} • Editado por {page.author}
                   </p>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {page.lastModified}
                 </div>
               </div>
             ))}
@@ -132,20 +156,29 @@ export function Dashboard({ onPageSelect }: DashboardProps) {
               <TrendingUp className="h-5 w-5" />
               Páginas Populares
             </CardTitle>
-            <CardDescription>Conteúdos mais acessados este mês</CardDescription>
+            <CardDescription>
+              Páginas mais visualizadas esta semana
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {popularPages.map((page, index) => (
               <div
-                key={index}
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => onPageSelect(`${page.category.toLowerCase()}-${page.title.toLowerCase()}`)}
+                key={page.id}
+                className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => onPageSelect(page.id)}
               >
-                <div className="flex-1">
-                  <span className="font-medium">{page.title}</span>
-                  <p className="text-sm text-muted-foreground">{page.category}</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <h4 className="font-medium">{page.title}</h4>
+                    <p className="text-sm text-muted-foreground">{page.category}</p>
+                  </div>
                 </div>
-                <Badge variant="outline">{page.views} views</Badge>
+                <div className="text-sm text-muted-foreground">
+                  {page.views} visualizações
+                </div>
               </div>
             ))}
           </CardContent>
