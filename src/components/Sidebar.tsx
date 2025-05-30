@@ -1,12 +1,13 @@
+
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Folder, File, Clock, Star, Search, Filter } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, File, Clock, Star, Search, Filter, Plus, Globe, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
-type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories';
+type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -50,6 +51,27 @@ const categories: Category[] = [
         pages: [
           { id: "rh-plano-saude", title: "Plano de Saúde", lastModified: "2024-01-15", isFavorite: true },
           { id: "rh-vale-refeicao", title: "Vale Refeição", lastModified: "2024-01-10" },
+        ],
+        children: [
+          {
+            id: "rh-beneficios-detalhes",
+            name: "Detalhes Específicos",
+            icon: "📋",
+            pages: [
+              { id: "rh-beneficios-convenios", title: "Convênios Médicos", lastModified: "2024-01-08" },
+            ],
+            children: [
+              {
+                id: "rh-beneficios-convenios-locais",
+                name: "Convênios por Região",
+                icon: "🌍",
+                pages: [
+                  { id: "rh-convenios-sp", title: "São Paulo", lastModified: "2024-01-05" },
+                  { id: "rh-convenios-rj", title: "Rio de Janeiro", lastModified: "2024-01-03" },
+                ]
+              }
+            ]
+          }
         ]
       },
       {
@@ -88,6 +110,16 @@ const categories: Category[] = [
         pages: [
           { id: "ti-senhas", title: "Políticas de Senhas", lastModified: "2024-01-20", isNew: true },
           { id: "ti-vpn", title: "Configuração VPN", lastModified: "2024-01-18" },
+        ],
+        children: [
+          {
+            id: "ti-seguranca-procedimentos",
+            name: "Procedimentos",
+            icon: "📝",
+            pages: [
+              { id: "ti-backup", title: "Backup e Recuperação", lastModified: "2024-01-12" },
+            ]
+          }
         ]
       }
     ]
@@ -95,7 +127,7 @@ const categories: Category[] = [
 ];
 
 export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: SidebarProps) {
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(["rh", "ti"]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(["rh", "ti", "rh-beneficios"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [favoritePages, setFavoritePages] = useState<string[]>(["rh-plano-saude"]);
 
@@ -142,20 +174,21 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
     const hasPages = category.pages && category.pages.length > 0;
     const isExpanded = expandedCategories.includes(category.id);
     const indentLevel = depth * 16;
+    const maxDepth = 5; // Visual limit for very deep nesting
 
     return (
       <div className="animate-fade-in">
         <Button
           variant="ghost"
-          className={`w-full justify-start text-sm font-medium h-9 transition-all duration-200 hover:bg-accent/50 hover:shadow-sm ${
+          className={`w-full justify-start text-sm font-medium h-9 transition-all duration-300 hover:bg-accent/50 hover:shadow-sm group ${
             isExpanded ? 'bg-accent/30' : ''
-          }`}
-          style={{ paddingLeft: `${12 + indentLevel}px` }}
+          } ${depth > maxDepth ? 'opacity-75' : ''}`}
+          style={{ paddingLeft: `${12 + Math.min(indentLevel, maxDepth * 16)}px` }}
           onClick={() => toggleCategory(category.id)}
         >
           <div className="flex items-center gap-2 flex-1">
             {hasChildren || hasPages ? (
-              <div className="transition-transform duration-200">
+              <div className="transition-transform duration-300 group-hover:scale-110">
                 {isExpanded ? (
                   <ChevronDown className="h-4 w-4" />
                 ) : (
@@ -166,11 +199,11 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
               <div className="w-4" />
             )}
             
-            <span className="text-base">{category.icon}</span>
+            <span className="text-base transition-transform duration-200 group-hover:scale-110">{category.icon}</span>
             <span className="flex-1 text-left truncate">{category.name}</span>
             
-            {(hasPages || hasChildren) && (
-              <Badge variant="secondary" className="text-xs ml-auto">
+            {depth <= 3 && (hasPages || hasChildren) && (
+              <Badge variant="secondary" className="text-xs ml-auto opacity-70 group-hover:opacity-100 transition-opacity">
                 {(category.pages?.length || 0) + (category.children?.length || 0)}
               </Badge>
             )}
@@ -179,14 +212,13 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
         
         {isExpanded && (
           <div className="animate-accordion-down space-y-1 mt-1">
-            {/* Render pages first */}
             {hasPages && (
               <div className="space-y-1">
                 {category.pages!.map((page) => (
                   <div
                     key={page.id}
                     className="group flex items-center gap-2"
-                    style={{ paddingLeft: `${28 + indentLevel}px` }}
+                    style={{ paddingLeft: `${28 + Math.min(indentLevel, maxDepth * 16)}px` }}
                   >
                     <Button
                       variant={selectedPage === page.id ? "secondary" : "ghost"}
@@ -215,7 +247,6 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
               </div>
             )}
             
-            {/* Then render children categories */}
             {hasChildren && (
               <div className="space-y-1">
                 {category.children!.map((child) => (
@@ -250,6 +281,31 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
 
         <ScrollArea className="flex-1">
           <div className="space-y-6">
+            {/* Quick Actions */}
+            <div>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h3 className="font-medium text-sm text-muted-foreground">Ações Rápidas</h3>
+              </div>
+              <div className="space-y-1">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-sm h-8 transition-all duration-200 hover:bg-accent/50"
+                  onClick={() => onViewChange('new')}
+                >
+                  <Plus className="h-3 w-3 mr-2 text-muted-foreground" />
+                  Nova Página
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-sm h-8 transition-all duration-200 hover:bg-accent/50"
+                  onClick={() => onViewChange('categories')}
+                >
+                  <Folder className="h-3 w-3 mr-2 text-muted-foreground" />
+                  Gerenciar Categorias
+                </Button>
+              </div>
+            </div>
+
             {/* Recent Pages */}
             <div>
               <div className="flex items-center gap-2 mb-3 px-1">
@@ -321,6 +377,35 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
                   <CategoryTreeItem key={category.id} category={category} />
                 ))}
               </div>
+            </div>
+
+            <Separator />
+
+            {/* CTFs Section */}
+            <div>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-medium text-sm text-muted-foreground">CTFs</h3>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 hover:bg-primary/10"
+                  onClick={() => onViewChange('ctfs')}
+                >
+                  <Globe className="h-3 w-3" />
+                </Button>
+              </div>
+              
+              <Button
+                variant="outline"
+                className="w-full justify-start text-sm h-8 transition-all duration-200 hover:bg-accent/50"
+                onClick={() => onViewChange('ctfs')}
+              >
+                <Target className="h-3 w-3 mr-2 text-muted-foreground" />
+                Ver CTFs Disponíveis
+              </Button>
             </div>
           </div>
         </ScrollArea>

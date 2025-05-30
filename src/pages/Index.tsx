@@ -40,12 +40,16 @@ const Index = () => {
   const renderMainContent = () => {
     switch (viewMode) {
       case 'page':
+        // Import the EnhancedPageView component
+        const EnhancedPageView = React.lazy(() => import('@/components/page/EnhancedPageView'));
         return (
-          <PageView 
-            pageId={selectedPage!} 
-            onBack={handleBack}
-            onEdit={() => handleEditPage(selectedPage!)}
-          />
+          <React.Suspense fallback={<div className="p-6">Carregando...</div>}>
+            <EnhancedPageView 
+              pageId={selectedPage!} 
+              onBack={handleBack}
+              onEdit={() => handleEditPage(selectedPage!)}
+            />
+          </React.Suspense>
         );
       case 'edit':
       case 'new':
@@ -60,6 +64,13 @@ const Index = () => {
         return <AdminSettings />;
       case 'categories':
         return <CategoryManager />;
+      case 'ctfs':
+        const CTFsPage = React.lazy(() => import('@/components/ctf/CTFsPage'));
+        return (
+          <React.Suspense fallback={<div className="p-6">Carregando CTFs...</div>}>
+            <CTFsPage />
+          </React.Suspense>
+        );
       default:
         return (
           <Dashboard 
