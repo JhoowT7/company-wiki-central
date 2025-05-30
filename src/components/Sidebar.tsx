@@ -1,12 +1,10 @@
-
 import { useState } from "react";
 import { ChevronDown, ChevronRight, Folder, File, Plus, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-
-type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs';
+import type { ViewMode } from "@/pages/Index";
 
 interface SidebarProps {
   isOpen: boolean;

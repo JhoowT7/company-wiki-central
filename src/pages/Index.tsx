@@ -8,7 +8,7 @@ import PageEditor from "@/components/editor/PageEditor";
 import AdminSettings from "@/components/settings/AdminSettings";
 import CategoryManager from "@/components/category/CategoryManager";
 
-type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs';
+export type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs';
 
 const Index = () => {
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
