@@ -1,19 +1,13 @@
 
-import React, { useState } from 'react';
-import { ArrowLeft, Edit, Heart, Share, Clock, User, Calendar, Tag, ExternalLink, Globe, Play, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Edit, Calendar, User, Tag, Share, Heart, Bookmark, MoreVertical, Eye, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-
-interface PageMetadata {
-  responsible: string;
-  lastUpdate: string;
-  status: 'published' | 'draft' | 'archived' | 'review';
-  internalLink?: string;
-  tags: string[];
-  category: string;
-}
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface EnhancedPageViewProps {
   pageId: string;
@@ -21,250 +15,318 @@ interface EnhancedPageViewProps {
   onEdit: () => void;
 }
 
+interface PageData {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  lastModified: string;
+  status: 'published' | 'draft' | 'archived';
+  tags: string[];
+  category: string;
+  views: number;
+  likes: number;
+  isLiked: boolean;
+  isBookmarked: boolean;
+  responsible: string;
+  createdDate: string;
+  version: string;
+  metadata: {
+    responsible: string;
+    updatedAt: string;
+    status: string;
+    version: string;
+    category: string;
+  };
+}
+
+interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  timestamp: string;
+  replies: Comment[];
+}
+
 const EnhancedPageView: React.FC<EnhancedPageViewProps> = ({ pageId, onBack, onEdit }) => {
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [pageData, setPageData] = useState<PageData | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [readingMode, setReadingMode] = useState<'normal' | 'dark' | 'sepia'>('normal');
 
-  // Mock data with enhanced structure
-  const mockPage = {
-    id: pageId,
-    title: "Políticas de Segurança da Informação",
-    content: `
-      <h2>🔒 Introdução à Segurança da Informação</h2>
-      <p>Este documento estabelece as diretrizes fundamentais para a proteção da informação na empresa, garantindo a confidencialidade, integridade e disponibilidade dos dados organizacionais.</p>
-      
-      <div class="info-box bg-blue-50 border-l-4 border-blue-500 p-4 my-6">
-        <h3>📋 Informações Importantes</h3>
-        <ul>
-          <li><strong>Documento obrigatório</strong> para todos os colaboradores</li>
-          <li><strong>Revisão anual</strong> ou quando necessário</li>
-          <li><strong>Treinamento</strong> disponível no portal de RH</li>
-        </ul>
-      </div>
-      
-      <h3>🔑 Políticas de Senhas</h3>
-      <ul>
-        <li>Mínimo de 12 caracteres</li>
-        <li>Incluir maiúsculas, minúsculas, números e símbolos especiais</li>
-        <li>Não reutilizar as últimas 5 senhas</li>
-        <li>Renovação obrigatória a cada 90 dias</li>
-      </ul>
-      
-      <h3>🌐 Acesso a Sistemas</h3>
-      <ul>
-        <li>Autenticação em dois fatores (2FA) obrigatória</li>
-        <li>Logout automático após 30 minutos de inatividade</li>
-        <li>VPN obrigatória para acesso remoto</li>
-      </ul>
-      
-      <h3>💾 Backup e Recuperação</h3>
-      <p>Todos os dados críticos devem seguir nossa política de backup:</p>
-      <ul>
-        <li>Backup diário automatizado às 22:00</li>
-        <li>Testes de restauração mensais</li>
-        <li>Retenção de 30 dias para backups incrementais</li>
-        <li>Backup anual arquivado por 7 anos</li>
-      </ul>
-      
-      <div class="video-container my-6">
-        <h4>📹 Vídeo Tutorial: Configuração do 2FA</h4>
-        <div class="bg-gray-100 border rounded-lg p-6 text-center">
-          <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 text-white rounded-full mb-4">
-            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-            </svg>
+  // Mock data
+  useEffect(() => {
+    const mockData: PageData = {
+      id: pageId,
+      title: "Políticas de Segurança da Informação",
+      content: `
+        <div class="space-y-6">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Introdução</h2>
+          <p class="text-gray-700 dark:text-gray-300">Este documento estabelece as diretrizes fundamentais para a proteção da informação na empresa, garantindo a confidencialidade, integridade e disponibilidade dos dados.</p>
+          
+          <figure class="my-6">
+            <img src="https://images.unsplash.com/photo-1555421689-491a97ff2040?w=800" alt="Segurança Digital" class="rounded-xl shadow-lg w-full" />
+            <figcaption class="text-center text-sm text-gray-500 mt-2">Representação visual da segurança digital empresarial</figcaption>
+          </figure>
+          
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Políticas de Senhas</h2>
+          <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-l-4 border-blue-500">
+            <h3 class="font-semibold text-blue-900 dark:text-blue-200">Requisitos Obrigatórios</h3>
+            <ul class="mt-2 space-y-1 text-blue-800 dark:text-blue-300">
+              <li>• Mínimo de 12 caracteres</li>
+              <li>• Incluir maiúsculas, minúsculas, números e símbolos</li>
+              <li>• Não reutilizar senhas anteriores</li>
+              <li>• Alteração obrigatória a cada 90 dias</li>
+            </ul>
           </div>
-          <p class="text-gray-600 mb-4">Tutorial de configuração do Two-Factor Authentication</p>
-          <a href="https://youtube.com/watch?v=exemplo" target="_blank" class="inline-block">
-            <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 mx-auto">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-              </svg>
-              Assistir Tutorial
-            </button>
-          </a>
-        </div>
-      </div>
-      
-      <div class="image-gallery my-6">
-        <h4>🖼️ Galeria: Exemplos de Configuração</h4>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div class="bg-gray-100 border rounded-lg overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400" alt="Exemplo de configuração 1" class="w-full h-40 object-cover" />
-            <div class="p-3">
-              <p class="text-sm text-gray-600">Tela de configuração do 2FA</p>
+          
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Acesso a Sistemas</h2>
+          <p class="text-gray-700 dark:text-gray-300">Todos os colaboradores devem seguir as seguintes diretrizes:</p>
+          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
+            <li>Autenticação em dois fatores obrigatória</li>
+            <li>Logout automático após 30 minutos de inatividade</li>
+            <li>Acesso via VPN para sistemas críticos</li>
+          </ul>
+          
+          <div class="bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 p-6 rounded-xl">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Portal de Acesso Rápido</h3>
+            <p class="text-gray-700 dark:text-gray-300 mb-4">Acesse o portal interno da empresa para mais informações sobre segurança.</p>
+            <a href="https://exemplo.com/portal" target="_blank" rel="noopener noreferrer">
+              <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+                Acessar Portal Interno
+              </button>
+            </a>
+          </div>
+          
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Vídeo Explicativo</h2>
+          <div class="rounded-xl overflow-hidden shadow-lg">
+            <iframe
+              width="100%"
+              height="400"
+              src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+              frameborder="0"
+              allowfullscreen
+              class="w-full"
+            ></iframe>
+          </div>
+          
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Backup e Recuperação</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border">
+              <h4 class="font-semibold text-gray-900 dark:text-white">Backup Diário</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Automatizado às 02:00</p>
             </div>
-          </div>
-          <div class="bg-gray-100 border rounded-lg overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=400" alt="Exemplo de configuração 2" class="w-full h-40 object-cover" />
-            <div class="p-3">
-              <p class="text-sm text-gray-600">Interface do aplicativo autenticador</p>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border">
+              <h4 class="font-semibold text-gray-900 dark:text-white">Testes de Restauração</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Mensais - primeira segunda-feira</p>
             </div>
           </div>
         </div>
-      </div>
-      
-      <h3>🚨 Incidentes de Segurança</h3>
-      <p>Em caso de suspeita de violação de segurança:</p>
-      <ol>
-        <li>Relate imediatamente ao TI através do email: <strong>security@empresa.com</strong></li>
-        <li>Não tente resolver sozinho</li>
-        <li>Preserve evidências (não apague logs ou arquivos)</li>
-        <li>Documente o ocorrido em detalhes</li>
-      </ol>
-      
-      <div class="button-container my-6 space-y-3">
-        <a href="https://portal.empresa.com/treinamentos" target="_blank">
-          <button class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center gap-2 w-full justify-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-            </svg>
-            Acessar Treinamentos
-          </button>
-        </a>
-        
-        <a href="/formularios/incidente-seguranca">
-          <button class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center gap-2 w-full justify-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-            </svg>
-            Reportar Incidente
-          </button>
-        </a>
-      </div>
-      
-      <div class="note-box bg-yellow-50 border-l-4 border-yellow-500 p-4 my-6">
-        <h4>💡 Dica Importante</h4>
-        <p>Mantenha sempre seus dispositivos atualizados e use apenas software licenciado. A segurança é responsabilidade de todos!</p>
-      </div>
-    `,
-    metadata: {
-      responsible: "João Silva (TI)",
-      lastUpdate: "2024-01-22",
-      status: 'published' as const,
-      internalLink: "/politicas/ti/seguranca-avancada",
-      tags: ["segurança", "política", "obrigatório", "TI"],
-      category: "Tecnologia da Informação"
-    },
-    author: "João Silva",
-    views: 247,
-    createdAt: "2024-01-15"
+      `,
+      author: "João Silva",
+      lastModified: "2024-01-22T10:30:00Z",
+      status: 'published',
+      tags: ["Segurança", "TI", "Políticas", "Compliance"],
+      category: "Tecnologia da Informação > Segurança",
+      views: 245,
+      likes: 12,
+      isLiked: false,
+      isBookmarked: false,
+      responsible: "João Silva - TI",
+      createdDate: "2024-01-15",
+      version: "v2.1",
+      metadata: {
+        responsible: "João Silva - TI",
+        updatedAt: "22/01/2024",
+        status: "Publicado",
+        version: "v2.1",
+        category: "TI > Segurança"
+      }
+    };
+
+    setPageData(mockData);
+    
+    const mockComments: Comment[] = [
+      {
+        id: '1',
+        author: 'Maria Santos',
+        content: 'Excelente documentação! Muito clara e objetiva.',
+        timestamp: '2024-01-20T14:30:00Z',
+        replies: [
+          {
+            id: '1-1',
+            author: 'João Silva',
+            content: 'Obrigado pelo feedback, Maria!',
+            timestamp: '2024-01-20T15:00:00Z',
+            replies: []
+          }
+        ]
+      },
+      {
+        id: '2',
+        author: 'Pedro Costa',
+        content: 'Seria possível adicionar exemplos práticos de senhas seguras?',
+        timestamp: '2024-01-21T09:15:00Z',
+        replies: []
+      }
+    ];
+    
+    setComments(mockComments);
+  }, [pageId]);
+
+  const handleLike = () => {
+    if (pageData) {
+      setPageData({
+        ...pageData,
+        isLiked: !pageData.isLiked,
+        likes: pageData.isLiked ? pageData.likes - 1 : pageData.likes + 1
+      });
+    }
   };
 
-  const statusColors = {
-    published: 'bg-green-100 text-green-800',
-    draft: 'bg-yellow-100 text-yellow-800',
-    archived: 'bg-gray-100 text-gray-800',
-    review: 'bg-blue-100 text-blue-800'
+  const handleBookmark = () => {
+    if (pageData) {
+      setPageData({
+        ...pageData,
+        isBookmarked: !pageData.isBookmarked
+      });
+    }
   };
 
-  const statusLabels = {
-    published: 'Publicado',
-    draft: 'Rascunho',
-    archived: 'Arquivado',
-    review: 'Em Revisão'
+  const handleAddComment = () => {
+    if (newComment.trim()) {
+      const comment: Comment = {
+        id: Date.now().toString(),
+        author: 'Usuário Atual',
+        content: newComment,
+        timestamp: new Date().toISOString(),
+        replies: []
+      };
+      setComments([...comments, comment]);
+      setNewComment('');
+    }
   };
+
+  const getReadingModeStyles = () => {
+    switch (readingMode) {
+      case 'dark':
+        return 'bg-gray-900 text-gray-100';
+      case 'sepia':
+        return 'bg-amber-50 text-amber-900';
+      default:
+        return 'bg-white text-gray-900';
+    }
+  };
+
+  const getReadingModeContentStyles = () => {
+    const baseStyles = {
+      fontSize: '16px',
+      lineHeight: '1.7',
+      maxWidth: 'none'
+    };
+
+    switch (readingMode) {
+      case 'dark':
+        return {
+          ...baseStyles,
+          color: '#f3f4f6',
+        };
+      case 'sepia':
+        return {
+          ...baseStyles,
+          color: '#92400e',
+        };
+      default:
+        return {
+          ...baseStyles,
+          color: '#374151',
+        };
+    }
+  };
+
+  if (!pageData) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-muted rounded w-1/4"></div>
+          <div className="h-8 bg-muted rounded w-3/4"></div>
+          <div className="h-32 bg-muted rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Enhanced Header with Metadata */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-4 mb-4">
-              <Button variant="ghost" size="sm" onClick={onBack}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
-              </Button>
-              
-              <Badge className={statusColors[mockPage.metadata.status]}>
-                {statusLabels[mockPage.metadata.status]}
-              </Badge>
-            </div>
-            
-            <h1 className="text-2xl font-bold mb-4">{mockPage.title}</h1>
-            
-            {/* Metadata Card */}
-            <Card className="mb-4 bg-muted/30">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  📋 Informações da Página
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Responsável</p>
-                    <p className="text-muted-foreground">{mockPage.metadata.responsible}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Última Atualização</p>
-                    <p className="text-muted-foreground">{mockPage.metadata.lastUpdate}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Categoria</p>
-                    <p className="text-muted-foreground">{mockPage.metadata.category}</p>
-                  </div>
-                </div>
-                
-                {mockPage.metadata.internalLink && (
-                  <div className="flex items-center gap-2">
-                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Link Relacionado</p>
-                      <a 
-                        href={mockPage.metadata.internalLink} 
-                        className="text-primary hover:underline text-muted-foreground"
-                      >
-                        Ver página avançada
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {mockPage.metadata.tags.map((tag, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  #{tag}
-                </Badge>
-              ))}
-            </div>
-            
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Criado em {mockPage.createdAt}
-              </span>
-              <span>{mockPage.views} visualizações</span>
+    <div className={`min-h-screen transition-colors duration-300 ${getReadingModeStyles()}`}>
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={onBack} className="hover:bg-accent">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">{pageData.views} visualizações</span>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 ml-6">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setIsFavorite(!isFavorite)}
-              className={isFavorite ? "text-red-500" : ""}
+          <div className="flex items-center gap-2">
+            {/* Reading Mode Toggle */}
+            <select
+              value={readingMode}
+              onChange={(e) => setReadingMode(e.target.value as any)}
+              className="text-sm border rounded px-3 py-1 bg-background"
             >
-              <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+              <option value="normal">Normal</option>
+              <option value="dark">Escuro</option>
+              <option value="sepia">Sépia</option>
+            </select>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLike}
+              className={pageData.isLiked ? 'text-red-500' : ''}
+            >
+              <Heart className={`h-4 w-4 mr-1 ${pageData.isLiked ? 'fill-current' : ''}`} />
+              {pageData.likes}
             </Button>
             
-            <Button variant="ghost" size="sm">
-              <Share className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBookmark}
+              className={pageData.isBookmarked ? 'text-blue-500' : ''}
+            >
+              <Bookmark className={`h-4 w-4 ${pageData.isBookmarked ? 'fill-current' : ''}`} />
             </Button>
             
-            <Button size="sm" onClick={onEdit}>
+            <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Share className="h-4 w-4 mr-1" />
+                  Compartilhar
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Compartilhar Página</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input 
+                    value={`${window.location.origin}/page/${pageData.id}`}
+                    readOnly
+                    onClick={(e) => e.currentTarget.select()}
+                  />
+                  <Button className="w-full">Copiar Link</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Button onClick={onEdit}>
               <Edit className="h-4 w-4 mr-2" />
               Editar
             </Button>
@@ -272,32 +334,128 @@ const EnhancedPageView: React.FC<EnhancedPageViewProps> = ({ pageId, onBack, onE
         </div>
       </div>
 
-      {/* Enhanced Content */}
-      <div className="flex-1 p-6">
-        <Card className="max-w-5xl mx-auto">
-          <CardContent className="p-8">
+      <div className="max-w-5xl mx-auto p-6 space-y-6">
+        {/* Metadata Card */}
+        <Card className="border-l-4 border-l-primary">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <CardTitle className="text-2xl">{pageData.title}</CardTitle>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    {pageData.metadata.responsible}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    Atualizado em {pageData.metadata.updatedAt}
+                  </div>
+                  <Badge variant={pageData.status === 'published' ? 'default' : 'secondary'}>
+                    {pageData.metadata.status}
+                  </Badge>
+                  <Badge variant="outline">
+                    {pageData.metadata.version}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Tag className="h-3 w-3" />
+              <span className="font-medium">Categoria:</span>
+              <span>{pageData.metadata.category}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tags */}
+        <div className="flex flex-wrap gap-2">
+          {pageData.tags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="hover:bg-secondary/80 cursor-pointer">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+
+        {/* Content */}
+        <Card>
+          <CardContent className="p-6">
             <div 
-              className="prose dark:prose-invert max-w-none prose-headings:scroll-mt-20 prose-img:rounded-lg prose-img:shadow-lg"
-              dangerouslySetInnerHTML={{ __html: mockPage.content }}
-              style={{
-                // Enhanced styles for embedded content
-                '--tw-prose-body': 'rgb(55 65 81)',
-                '--tw-prose-headings': 'rgb(17 24 39)',
-                '--tw-prose-links': 'rgb(59 130 246)',
-                '--tw-prose-bold': 'rgb(17 24 39)',
-                '--tw-prose-counters': 'rgb(107 114 128)',
-                '--tw-prose-bullets': 'rgb(107 114 128)',
-                '--tw-prose-hr': 'rgb(229 231 235)',
-                '--tw-prose-quotes': 'rgb(107 114 128)',
-                '--tw-prose-quote-borders': 'rgb(229 231 235)',
-                '--tw-prose-captions': 'rgb(107 114 128)',
-                '--tw-prose-code': 'rgb(17 24 39)',
-                '--tw-prose-pre-code': 'rgb(229 231 235)',
-                '--tw-prose-pre-bg': 'rgb(17 24 39)',
-                '--tw-prose-th-borders': 'rgb(209 213 219)',
-                '--tw-prose-td-borders': 'rgb(229 231 235)'
-              }}
+              className="prose max-w-none"
+              style={getReadingModeContentStyles()}
+              dangerouslySetInnerHTML={{ __html: pageData.content }}
             />
+          </CardContent>
+        </Card>
+
+        {/* Comments Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Comentários ({comments.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Add Comment */}
+            <div className="space-y-2">
+              <Textarea
+                placeholder="Adicione um comentário..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="min-h-[100px]"
+              />
+              <Button onClick={handleAddComment} disabled={!newComment.trim()}>
+                Comentar
+              </Button>
+            </div>
+            
+            <Separator />
+            
+            {/* Comments List */}
+            <div className="space-y-4">
+              {comments.map((comment) => (
+                <div key={comment.id} className="space-y-2">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
+                      {comment.author.charAt(0)}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-medium">{comment.author}</span>
+                        <span className="text-muted-foreground">
+                          {new Date(comment.timestamp).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                      <p className="text-sm">{comment.content}</p>
+                      
+                      {/* Replies */}
+                      {comment.replies.length > 0 && (
+                        <div className="ml-6 mt-3 space-y-2 border-l-2 border-muted pl-4">
+                          {comment.replies.map((reply) => (
+                            <div key={reply.id} className="flex items-start gap-3">
+                              <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-muted-foreground text-xs font-medium">
+                                {reply.author.charAt(0)}
+                              </div>
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className="font-medium">{reply.author}</span>
+                                  <span className="text-muted-foreground">
+                                    {new Date(reply.timestamp).toLocaleDateString('pt-BR')}
+                                  </span>
+                                </div>
+                                <p className="text-xs">{reply.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>

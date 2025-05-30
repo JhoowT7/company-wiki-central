@@ -1,10 +1,9 @@
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Folder, File, Clock, Star, Search, Filter, Plus, Globe, Target } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, File, Plus, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
 type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs';
@@ -31,7 +30,6 @@ interface Page {
   title: string;
   lastModified: string;
   isNew?: boolean;
-  isFavorite?: boolean;
 }
 
 const categories: Category[] = [
@@ -40,16 +38,14 @@ const categories: Category[] = [
     name: "Recursos Humanos",
     icon: "👥",
     expanded: true,
-    pages: [
-      { id: "rh-manual-geral", title: "Manual Geral RH", lastModified: "2024-01-22", isNew: true },
-    ],
+    pages: [],
     children: [
       {
         id: "rh-beneficios",
         name: "Benefícios",
         icon: "💰",
         pages: [
-          { id: "rh-plano-saude", title: "Plano de Saúde", lastModified: "2024-01-15", isFavorite: true },
+          { id: "rh-plano-saude", title: "Plano de Saúde", lastModified: "2024-01-15" },
           { id: "rh-vale-refeicao", title: "Vale Refeição", lastModified: "2024-01-10" },
         ],
         children: [
@@ -99,9 +95,7 @@ const categories: Category[] = [
     name: "Tecnologia da Informação",
     icon: "💻",
     expanded: true,
-    pages: [
-      { id: "ti-inventario", title: "Inventário", lastModified: "2024-01-18" },
-    ],
+    pages: [],
     children: [
       {
         id: "ti-seguranca",
@@ -121,15 +115,39 @@ const categories: Category[] = [
             ]
           }
         ]
+      },
+      {
+        id: "ti-sistemas",
+        name: "Sistemas",
+        icon: "⚙️",
+        pages: [
+          { id: "ti-inventario", title: "Inventário de Hardware", lastModified: "2024-01-18" },
+          { id: "ti-software", title: "Licenças de Software", lastModified: "2024-01-16" },
+        ]
+      }
+    ]
+  },
+  {
+    id: "juridico",
+    name: "Jurídico",
+    icon: "⚖️",
+    expanded: false,
+    pages: [],
+    children: [
+      {
+        id: "juridico-contratos",
+        name: "Contratos",
+        icon: "📄",
+        pages: [
+          { id: "juridico-modelo-contrato", title: "Modelo de Contrato", lastModified: "2024-01-12" },
+        ]
       }
     ]
   }
 ];
 
 export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: SidebarProps) {
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(["rh", "ti", "rh-beneficios"]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [favoritePages, setFavoritePages] = useState<string[]>(["rh-plano-saude"]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(["rh", "ti", "rh-beneficios", "ti-seguranca"]);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev =>
@@ -139,42 +157,12 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
     );
   };
 
-  const toggleFavorite = (pageId: string) => {
-    setFavoritePages(prev =>
-      prev.includes(pageId)
-        ? prev.filter(id => id !== pageId)
-        : [...prev, pageId]
-    );
-  };
-
-  const getAllPages = (categories: Category[]): Page[] => {
-    const pages: Page[] = [];
-    
-    const extractPages = (cats: Category[]) => {
-      cats.forEach(cat => {
-        if (cat.pages) {
-          pages.push(...cat.pages);
-        }
-        if (cat.children) {
-          extractPages(cat.children);
-        }
-      });
-    };
-    
-    extractPages(categories);
-    return pages;
-  };
-
-  const recentPages = getAllPages(categories)
-    .sort((a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime())
-    .slice(0, 5);
-
   const CategoryTreeItem = ({ category, depth = 0 }: { category: Category; depth?: number }) => {
     const hasChildren = category.children && category.children.length > 0;
     const hasPages = category.pages && category.pages.length > 0;
     const isExpanded = expandedCategories.includes(category.id);
     const indentLevel = depth * 16;
-    const maxDepth = 5; // Visual limit for very deep nesting
+    const maxDepth = 5;
 
     return (
       <div className="animate-fade-in">
@@ -231,17 +219,6 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
                         <Badge variant="secondary" className="ml-auto text-xs">Novo</Badge>
                       )}
                     </Button>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 ${
-                        favoritePages.includes(page.id) ? 'opacity-100 text-yellow-500 hover:text-yellow-600' : 'hover:text-yellow-500'
-                      }`}
-                      onClick={() => toggleFavorite(page.id)}
-                    >
-                      <Star className={`h-3 w-3 ${favoritePages.includes(page.id) ? 'fill-current' : ''}`} />
-                    </Button>
                   </div>
                 ))}
               </div>
@@ -265,20 +242,6 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
   return (
     <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-80 border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-40 shadow-lg">
       <div className="p-4 space-y-4 h-full flex flex-col">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar páginas..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-9 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
-          />
-          <Button variant="ghost" size="sm" className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0">
-            <Filter className="h-3 w-3" />
-          </Button>
-        </div>
-
         <ScrollArea className="flex-1">
           <div className="space-y-6">
             {/* Quick Actions */}
@@ -305,56 +268,6 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
                 </Button>
               </div>
             </div>
-
-            {/* Recent Pages */}
-            <div>
-              <div className="flex items-center gap-2 mb-3 px-1">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <h3 className="font-medium text-sm text-muted-foreground">Páginas Recentes</h3>
-              </div>
-              <div className="space-y-1">
-                {recentPages.map(page => (
-                  <Button
-                    key={page.id}
-                    variant="ghost"
-                    className="w-full justify-start text-sm h-8 transition-all duration-200 hover:bg-accent/50"
-                    onClick={() => onPageSelect(page.id)}
-                  >
-                    <File className="h-3 w-3 mr-2 text-muted-foreground" />
-                    <span className="flex-1 text-left truncate">{page.title}</span>
-                    {page.isNew && <Badge variant="secondary" className="ml-auto text-xs">Novo</Badge>}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Favorites */}
-            {favoritePages.length > 0 && (
-              <>
-                <Separator />
-                <div>
-                  <div className="flex items-center gap-2 mb-3 px-1">
-                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                    <h3 className="font-medium text-sm text-muted-foreground">Favoritos</h3>
-                  </div>
-                  <div className="space-y-1">
-                    {getAllPages(categories)
-                      .filter(page => favoritePages.includes(page.id))
-                      .map(page => (
-                        <Button
-                          key={page.id}
-                          variant="ghost"
-                          className="w-full justify-start text-sm h-8 transition-all duration-200 hover:bg-accent/50"
-                          onClick={() => onPageSelect(page.id)}
-                        >
-                          <Star className="h-3 w-3 mr-2 text-yellow-500 fill-current" />
-                          <span className="flex-1 text-left truncate">{page.title}</span>
-                        </Button>
-                      ))}
-                  </div>
-                </div>
-              </>
-            )}
 
             <Separator />
 
@@ -394,7 +307,7 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
                   className="h-6 w-6 p-0 hover:bg-primary/10"
                   onClick={() => onViewChange('ctfs')}
                 >
-                  <Globe className="h-3 w-3" />
+                  <Target className="h-3 w-3" />
                 </Button>
               </div>
               

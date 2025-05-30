@@ -1,15 +1,14 @@
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { Dashboard } from "@/components/Dashboard";
-import { PageView } from "@/components/PageView";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import PageEditor from "@/components/editor/PageEditor";
 import AdminSettings from "@/components/settings/AdminSettings";
 import CategoryManager from "@/components/category/CategoryManager";
 
-type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories';
+type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs';
 
 const Index = () => {
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
@@ -37,10 +36,13 @@ const Index = () => {
     setSelectedPage(null);
   };
 
+  const handleViewChange = (view: ViewMode) => {
+    setViewMode(view);
+  };
+
   const renderMainContent = () => {
     switch (viewMode) {
       case 'page':
-        // Import the EnhancedPageView component
         const EnhancedPageView = React.lazy(() => import('@/components/page/EnhancedPageView'));
         return (
           <React.Suspense fallback={<div className="p-6">Carregando...</div>}>
@@ -87,7 +89,7 @@ const Index = () => {
         <Header 
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           sidebarOpen={sidebarOpen}
-          onViewChange={setViewMode}
+          onViewChange={handleViewChange}
           currentView={viewMode}
         />
         
@@ -96,7 +98,7 @@ const Index = () => {
             isOpen={sidebarOpen}
             onPageSelect={handlePageSelect}
             selectedPage={selectedPage}
-            onViewChange={setViewMode}
+            onViewChange={handleViewChange}
           />
           
           <main className={`flex-1 transition-all duration-300 ${
