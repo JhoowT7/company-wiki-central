@@ -1,11 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight, Folder, File, Plus, Target, Database, ArrowLeft, Image, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ViewMode } from "@/types";
+import { database } from "@/stores/database";
+import { Folder as FolderType, Page } from "@/types";
+
+type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs' | 'kanban' | 'table' | 'graph' | 'backup' | 'folders' | 'media';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -14,43 +17,37 @@ interface SidebarProps {
   onViewChange: (view: ViewMode) => void;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  icon: string;
-  pages: Page[];
-  children?: Category[];
-  expanded?: boolean;
-  depth?: number;
-}
-
-interface Page {
-  id: string;
-  title: string;
-  lastModified: string;
-  isNew?: boolean;
-}
-
-// Categorias iniciais vazias para o usuário popular
-const categories: Category[] = [];
-
 export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: SidebarProps) {
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
+  const [folders, setFolders] = useState<FolderType[]>([]);
+  const [pages, setPages] = useState<Page[]>([]);
 
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
+  useEffect(() => {
+    const loadData = () => {
+      setFolders(database.getFolders());
+      setPages(database.getPages());
+    };
+
+    loadData();
+    const unsubscribe = database.subscribe(loadData);
+    return unsubscribe;
+  }, []);
+
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolders(prev =>
+      prev.includes(folderId)
+        ? prev.filter(id => id !== folderId)
+        : [...prev, folderId]
     );
   };
 
-  const CategoryTreeItem = ({ category, depth = 0 }: { category: Category; depth?: number }) => {
-    const hasChildren = category.children && category.children.length > 0;
-    const hasPages = category.pages && category.pages.length > 0;
-    const isExpanded = expandedCategories.includes(category.id);
-    const indentLevel = depth * 16;
-    const maxDepth = 5;
+  const getFolderPages = (folderId: string) => {
+    return pages.filter(page => page.folderId === folderId);
+  };
+
+  const FolderItem = ({ folder }: { folder: FolderType }) => {
+    const folderPages = getFolderPages(folder.id);
+    const isExpanded = expandedFolders.includes(folder.id);
 
     return (
       <div className="animate-fade-in">
@@ -58,81 +55,67 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
           variant="ghost"
           className={`w-full justify-start text-sm font-medium h-9 transition-all duration-500 hover:bg-accent/50 hover:shadow-sm hover:scale-[1.02] group ${
             isExpanded ? 'bg-accent/30 shadow-inner' : ''
-          } ${depth > maxDepth ? 'opacity-75' : ''}`}
-          style={{ paddingLeft: `${12 + Math.min(indentLevel, maxDepth * 16)}px` }}
-          onClick={() => toggleCategory(category.id)}
+          }`}
+          onClick={() => toggleFolder(folder.id)}
         >
           <div className="flex items-center gap-2 flex-1">
-            {hasChildren || hasPages ? (
-              <div className="transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
-                {isExpanded ? (
+            <div className="transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
+              {folderPages.length > 0 ? (
+                isExpanded ? (
                   <ChevronDown className="h-4 w-4 text-primary" />
                 ) : (
                   <ChevronRight className="h-4 w-4" />
-                )}
-              </div>
-            ) : (
-              <div className="w-4" />
-            )}
+                )
+              ) : (
+                <div className="w-4" />
+              )}
+            </div>
             
-            <span className="text-lg transition-all duration-300 group-hover:scale-110 filter group-hover:brightness-110">
-              {category.icon}
+            <span className="text-lg transition-all duration-300 group-hover:scale-110 filter group-hover:brightness-110" style={{ color: folder.color }}>
+              {folder.icon}
             </span>
             <span className="flex-1 text-left truncate group-hover:text-primary transition-colors duration-300">
-              {category.name}
+              {folder.name}
             </span>
             
-            {depth <= 3 && (hasPages || hasChildren) && (
+            {folderPages.length > 0 && (
               <Badge 
                 variant="secondary" 
-                className="text-xs ml-auto opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300 animate-pulse"
+                className="text-xs ml-auto opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
               >
-                {(category.pages?.length || 0) + (category.children?.length || 0)}
+                {folderPages.length}
               </Badge>
             )}
           </div>
         </Button>
         
-        {isExpanded && (
+        {isExpanded && folderPages.length > 0 && (
           <div className="animate-accordion-down space-y-1 mt-1 overflow-hidden">
-            {hasPages && (
-              <div className="space-y-1">
-                {category.pages!.map((page, index) => (
-                  <div
-                    key={page.id}
-                    className="group flex items-center gap-2 animate-slide-up"
-                    style={{ 
-                      paddingLeft: `${28 + Math.min(indentLevel, maxDepth * 16)}px`,
-                      animationDelay: `${index * 0.05}s`
-                    }}
-                  >
-                    <Button
-                      variant={selectedPage === page.id ? "secondary" : "ghost"}
-                      className={`flex-1 justify-start text-sm h-8 transition-all duration-300 hover:bg-accent/50 hover:translate-x-1 hover:shadow-md ${
-                        selectedPage === page.id ? 'bg-primary/10 border-l-2 border-primary shadow-inner' : ''
-                      }`}
-                      onClick={() => onPageSelect(page.id)}
-                    >
-                      <File className="h-3 w-3 mr-2 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
-                      <span className="flex-1 text-left truncate">{page.title}</span>
-                      {page.isNew && (
-                        <Badge variant="destructive" className="ml-auto text-xs animate-pulse">
-                          Novo
-                        </Badge>
-                      )}
-                    </Button>
-                  </div>
-                ))}
+            {folderPages.map((page, index) => (
+              <div
+                key={page.id}
+                className="group flex items-center gap-2 animate-slide-up pl-8"
+                style={{ 
+                  animationDelay: `${index * 0.05}s`
+                }}
+              >
+                <Button
+                  variant={selectedPage === page.id ? "secondary" : "ghost"}
+                  className={`flex-1 justify-start text-sm h-8 transition-all duration-300 hover:bg-accent/50 hover:translate-x-1 hover:shadow-md ${
+                    selectedPage === page.id ? 'bg-primary/10 border-l-2 border-primary shadow-inner' : ''
+                  }`}
+                  onClick={() => onPageSelect(page.id)}
+                >
+                  <File className="h-3 w-3 mr-2 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
+                  <span className="flex-1 text-left truncate">{page.title}</span>
+                  {page.status === 'draft' && (
+                    <Badge variant="outline" className="ml-auto text-xs">
+                      Rascunho
+                    </Badge>
+                  )}
+                </Button>
               </div>
-            )}
-            
-            {hasChildren && (
-              <div className="space-y-1">
-                {category.children!.map((child) => (
-                  <CategoryTreeItem key={child.id} category={child} depth={depth + 1} />
-                ))}
-              </div>
-            )}
+            ))}
           </div>
         )}
       </div>
@@ -189,39 +172,39 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
 
             <Separator className="opacity-50" />
 
-            {/* Categories */}
+            {/* Folders */}
             <div className="animate-slide-up">
               <div className="flex items-center justify-between mb-3 px-1">
-                <h3 className="font-medium text-sm text-muted-foreground">Categorias</h3>
+                <h3 className="font-medium text-sm text-muted-foreground">Pastas</h3>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-6 w-6 p-0 hover:bg-primary/10 hover:scale-110 transition-all duration-300"
-                  onClick={() => onViewChange('categories')}
+                  onClick={() => onViewChange('folders')}
                 >
                   <Folder className="h-3 w-3" />
                 </Button>
               </div>
               
               <div className="space-y-1">
-                {categories.length === 0 ? (
+                {folders.length === 0 ? (
                   <div className="text-center py-8">
                     <Folder className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">
-                      Nenhuma categoria ainda
+                      Nenhuma pasta ainda
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Crie pastas para organizar
                     </p>
                   </div>
                 ) : (
-                  categories.map((category, index) => (
+                  folders.map((folder, index) => (
                     <div 
-                      key={category.id}
+                      key={folder.id}
                       className="animate-fade-in"
                       style={{animationDelay: `${index * 0.1}s`}}
                     >
-                      <CategoryTreeItem category={category} />
+                      <FolderItem folder={folder} />
                     </div>
                   ))
                 )}

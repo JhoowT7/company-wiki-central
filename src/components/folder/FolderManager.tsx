@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Plus, Folder, Edit, Trash2, Move, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { database } from "@/stores/database";
 import { Folder as FolderType } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 const FolderManager = () => {
   const [folders, setFolders] = useState<FolderType[]>([]);
@@ -21,6 +23,7 @@ const FolderManager = () => {
     parentId: '',
     description: ''
   });
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadFolders = () => {
@@ -29,41 +32,79 @@ const FolderManager = () => {
 
     loadFolders();
     const unsubscribe = database.subscribe(loadFolders);
-    return () => {
-      unsubscribe();
-    };
+    return unsubscribe;
   }, []);
 
   const createFolder = () => {
-    if (!newFolder.name.trim()) return;
+    if (!newFolder.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da pasta é obrigatório",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    const path = newFolder.parentId 
-      ? `${folders.find(f => f.id === newFolder.parentId)?.path}/${newFolder.name.toLowerCase().replace(/\s+/g, '-')}`
-      : `/${newFolder.name.toLowerCase().replace(/\s+/g, '-')}`;
+    try {
+      const path = newFolder.parentId 
+        ? `${folders.find(f => f.id === newFolder.parentId)?.path}/${newFolder.name.toLowerCase().replace(/\s+/g, '-')}`
+        : `/${newFolder.name.toLowerCase().replace(/\s+/g, '-')}`;
 
-    database.createFolder({
-      name: newFolder.name,
-      icon: newFolder.icon,
-      color: newFolder.color,
-      parentId: newFolder.parentId || undefined,
-      path,
-      description: newFolder.description,
-      permissions: { read: ['*'], write: ['admin'], delete: ['admin'] },
-      order: folders.length + 1
-    });
+      database.createFolder({
+        name: newFolder.name,
+        icon: newFolder.icon,
+        color: newFolder.color,
+        parentId: newFolder.parentId || undefined,
+        path,
+        description: newFolder.description,
+        permissions: { read: ['*'], write: ['admin'], delete: ['admin'] },
+        order: folders.length + 1
+      });
 
-    setNewFolder({
-      name: '',
-      icon: '📁',
-      color: '#3B82F6',
-      parentId: '',
-      description: ''
-    });
-    setIsCreateDialogOpen(false);
+      toast({
+        title: "Sucesso",
+        description: "Pasta criada com sucesso!",
+      });
+
+      setNewFolder({
+        name: '',
+        icon: '📁',
+        color: '#3B82F6',
+        parentId: '',
+        description: ''
+      });
+      setIsCreateDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao criar pasta",
+        variant: "destructive"
+      });
+    }
   };
 
   const deleteFolder = (id: string) => {
-    database.deleteFolder(id);
+    try {
+      const success = database.deleteFolder(id);
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Pasta excluída com sucesso!",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: "Pasta não encontrada",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir pasta",
+        variant: "destructive"
+      });
+    }
   };
 
   const iconOptions = ['📁', '👥', '💻', '⚖️', '💰', '📋', '🔒', '⚙️', '📊', '🎯', '📚', '🏢'];
