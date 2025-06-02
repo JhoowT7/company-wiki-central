@@ -31,122 +31,11 @@ interface Page {
   isNew?: boolean;
 }
 
-const categories: Category[] = [
-  {
-    id: "rh",
-    name: "Recursos Humanos",
-    icon: "👥",
-    expanded: true,
-    pages: [],
-    children: [
-      {
-        id: "rh-beneficios",
-        name: "Benefícios",
-        icon: "💰",
-        pages: [
-          { id: "rh-plano-saude", title: "Plano de Saúde", lastModified: "2024-01-15" },
-          { id: "rh-vale-refeicao", title: "Vale Refeição", lastModified: "2024-01-10" },
-        ],
-        children: [
-          {
-            id: "rh-beneficios-detalhes",
-            name: "Detalhes Específicos",
-            icon: "📋",
-            pages: [
-              { id: "rh-beneficios-convenios", title: "Convênios Médicos", lastModified: "2024-01-08" },
-            ],
-            children: [
-              {
-                id: "rh-beneficios-convenios-locais",
-                name: "Convênios por Região",
-                icon: "🌍",
-                pages: [
-                  { id: "rh-convenios-sp", title: "São Paulo", lastModified: "2024-01-05" },
-                  { id: "rh-convenios-rj", title: "Rio de Janeiro", lastModified: "2024-01-03" },
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        id: "rh-politicas",
-        name: "Políticas",
-        icon: "📋",
-        expanded: false,
-        pages: [],
-        children: [
-          {
-            id: "rh-codigo-conduta",
-            name: "Código de Conduta",
-            icon: "⚖️",
-            pages: [
-              { id: "rh-codigo-etica", title: "Código de Ética", lastModified: "2024-01-20" },
-              { id: "rh-assedio", title: "Prevenção ao Assédio", lastModified: "2024-01-18" },
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "ti",
-    name: "Tecnologia da Informação",
-    icon: "💻",
-    expanded: true,
-    pages: [],
-    children: [
-      {
-        id: "ti-seguranca",
-        name: "Segurança",
-        icon: "🔒",
-        pages: [
-          { id: "ti-senhas", title: "Políticas de Senhas", lastModified: "2024-01-20", isNew: true },
-          { id: "ti-vpn", title: "Configuração VPN", lastModified: "2024-01-18" },
-        ],
-        children: [
-          {
-            id: "ti-seguranca-procedimentos",
-            name: "Procedimentos",
-            icon: "📝",
-            pages: [
-              { id: "ti-backup", title: "Backup e Recuperação", lastModified: "2024-01-12" },
-            ]
-          }
-        ]
-      },
-      {
-        id: "ti-sistemas",
-        name: "Sistemas",
-        icon: "⚙️",
-        pages: [
-          { id: "ti-inventario", title: "Inventário de Hardware", lastModified: "2024-01-18" },
-          { id: "ti-software", title: "Licenças de Software", lastModified: "2024-01-16" },
-        ]
-      }
-    ]
-  },
-  {
-    id: "juridico",
-    name: "Jurídico",
-    icon: "⚖️",
-    expanded: false,
-    pages: [],
-    children: [
-      {
-        id: "juridico-contratos",
-        name: "Contratos",
-        icon: "📄",
-        pages: [
-          { id: "juridico-modelo-contrato", title: "Modelo de Contrato", lastModified: "2024-01-12" },
-        ]
-      }
-    ]
-  }
-];
+// Categorias iniciais vazias para o usuário popular
+const categories: Category[] = [];
 
 export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: SidebarProps) {
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(["rh", "ti", "rh-beneficios", "ti-seguranca"]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev =>
@@ -315,15 +204,27 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
               </div>
               
               <div className="space-y-1">
-                {categories.map((category, index) => (
-                  <div 
-                    key={category.id}
-                    className="animate-fade-in"
-                    style={{animationDelay: `${index * 0.1}s`}}
-                  >
-                    <CategoryTreeItem category={category} />
+                {categories.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Folder className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma categoria ainda
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Crie pastas para organizar
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  categories.map((category, index) => (
+                    <div 
+                      key={category.id}
+                      className="animate-fade-in"
+                      style={{animationDelay: `${index * 0.1}s`}}
+                    >
+                      <CategoryTreeItem category={category} />
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 

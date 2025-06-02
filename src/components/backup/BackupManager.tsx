@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Download, Upload, Trash2, Database, AlertCircle, Check, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,9 @@ const BackupManager = () => {
 
     loadBackups();
     const unsubscribe = database.subscribe(loadBackups);
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const createBackup = async () => {

@@ -31,9 +31,8 @@ class DatabaseManager {
     this.listeners.forEach(callback => callback());
   }
 
-  // Inicializar com dados mock
+  // Inicializar com usuário padrão apenas
   private initializeWithMockData() {
-    // Usuários
     this.data.users = [
       {
         id: 'user-1',
@@ -47,82 +46,11 @@ class DatabaseManager {
       }
     ];
 
-    // Pastas
-    this.data.folders = [
-      {
-        id: 'rh',
-        name: 'Recursos Humanos',
-        icon: '👥',
-        color: '#3B82F6',
-        path: '/rh',
-        permissions: { read: ['*'], write: ['admin', 'hr'], delete: ['admin'] },
-        metadata: {
-          createdBy: 'user-1',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          tags: ['departamento', 'pessoas']
-        },
-        order: 1
-      },
-      {
-        id: 'ti',
-        name: 'Tecnologia da Informação',
-        icon: '💻',
-        color: '#10B981',
-        path: '/ti',
-        permissions: { read: ['*'], write: ['admin', 'ti'], delete: ['admin'] },
-        metadata: {
-          createdBy: 'user-1',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          tags: ['departamento', 'tecnologia']
-        },
-        order: 2
-      }
-    ];
-
-    // Páginas
-    this.data.pages = [
-      {
-        id: 'page-1',
-        title: 'Políticas de Segurança',
-        content: '# Políticas de Segurança\n\nDocumento importante sobre segurança...',
-        folderId: 'ti',
-        status: 'published',
-        priority: 'high',
-        metadata: {
-          createdBy: 'user-1',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          version: 1,
-          tags: ['segurança', 'política'],
-          category: 'documentacao'
-        },
-        permissions: { read: ['*'], write: ['admin', 'ti'], comment: ['*'] },
-        viewCount: 42,
-        isTemplate: false
-      }
-    ];
-
-    // CTFs
-    this.data.ctfs = [
-      {
-        id: 'ctf-1',
-        title: 'SQL Injection Challenge',
-        description: 'Desafio de injeção SQL para teste de segurança',
-        difficulty: 'medium',
-        category: 'Web Security',
-        points: 250,
-        tags: ['sql', 'injection', 'web'],
-        url: 'https://ctf.example.com/sql-challenge',
-        status: 'available',
-        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        createdBy: 'user-1',
-        createdAt: new Date(),
-        completedBy: [],
-        hints: ['Verifique os parâmetros da URL', 'Use UNION SELECT']
-      }
-    ];
+    // Deixar arrays vazios para começar limpo
+    this.data.folders = [];
+    this.data.pages = [];
+    this.data.ctfs = [];
+    this.data.mediaFiles = [];
   }
 
   // Métodos CRUD para Pastas

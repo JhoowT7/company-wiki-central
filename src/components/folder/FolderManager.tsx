@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Plus, Folder, Edit, Trash2, Move, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,9 @@ const FolderManager = () => {
 
     loadFolders();
     const unsubscribe = database.subscribe(loadFolders);
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const createFolder = () => {
@@ -167,46 +168,59 @@ const FolderManager = () => {
 
       {/* Lista de Pastas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {folders.map((folder) => (
-          <Card key={folder.id} className="hover:shadow-lg transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <span style={{ color: folder.color }} className="text-2xl">
-                  {folder.icon}
-                </span>
-                <div>
-                  <h3 className="font-semibold">{folder.name}</h3>
-                  <p className="text-sm text-muted-foreground">{folder.path}</p>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {folder.description && (
-                <p className="text-sm text-muted-foreground mb-3">{folder.description}</p>
-              )}
-              <div className="flex items-center justify-between">
-                <div className="flex gap-1">
-                  <Badge variant="outline">
-                    {database.getPages().filter(p => p.folderId === folder.id).length} páginas
-                  </Badge>
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => deleteFolder(folder.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
+        {folders.length === 0 ? (
+          <Card className="col-span-full p-12 text-center">
+            <Folder className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhuma pasta encontrada</h3>
+            <p className="text-muted-foreground mb-4">
+              Crie sua primeira pasta para organizar o conteúdo
+            </p>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              Criar Primeira Pasta
+            </Button>
           </Card>
-        ))}
+        ) : (
+          folders.map((folder) => (
+            <Card key={folder.id} className="hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <span style={{ color: folder.color }} className="text-2xl">
+                    {folder.icon}
+                  </span>
+                  <div>
+                    <h3 className="font-semibold">{folder.name}</h3>
+                    <p className="text-sm text-muted-foreground">{folder.path}</p>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {folder.description && (
+                  <p className="text-sm text-muted-foreground mb-3">{folder.description}</p>
+                )}
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1">
+                    <Badge variant="outline">
+                      {database.getPages().filter(p => p.folderId === folder.id).length} páginas
+                    </Badge>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => deleteFolder(folder.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );

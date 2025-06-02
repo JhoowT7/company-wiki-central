@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Upload, Image, Video, FileText, ExternalLink, Trash2, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,9 @@ const MediaManager = () => {
 
     loadMedia();
     const unsubscribe = database.subscribe(loadMedia);
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const extractYouTubeId = (url: string) => {
@@ -213,90 +214,90 @@ const MediaManager = () => {
 
       {/* Lista de Mídia */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {mediaFiles.map((media) => (
-          <Card key={media.id} className="hover:shadow-lg transition-all duration-300">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {getMediaIcon(media.type)}
-                  <Badge variant="outline" className="text-xs">
-                    {media.type}
-                  </Badge>
+        {mediaFiles.length === 0 ? (
+          <Card className="col-span-full p-12 text-center">
+            <Image className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhum arquivo encontrado</h3>
+            <p className="text-muted-foreground mb-4">
+              Faça upload de imagens, vídeos ou adicione links do YouTube
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => setIsUploadDialogOpen(true)}>
+                Fazer Upload
+              </Button>
+              <Button variant="outline" onClick={() => setIsYoutubeDialogOpen(true)}>
+                Adicionar YouTube
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          mediaFiles.map((media) => (
+            <Card key={media.id} className="hover:shadow-lg transition-all duration-300">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {getMediaIcon(media.type)}
+                    <Badge variant="outline" className="text-xs">
+                      {media.type}
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteMedia(media.id)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deleteMedia(media.id)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-3">
-              {/* Preview */}
-              {media.type === 'image' && (
-                <img 
-                  src={media.url} 
-                  alt={media.name}
-                  className="w-full h-32 object-cover rounded"
-                />
-              )}
-              {media.type === 'youtube' && media.thumbnailUrl && (
-                <div className="relative">
+              </CardHeader>
+              
+              <CardContent className="space-y-3">
+                {/* Preview */}
+                {media.type === 'image' && (
                   <img 
-                    src={media.thumbnailUrl} 
+                    src={media.url} 
                     alt={media.name}
                     className="w-full h-32 object-cover rounded"
                   />
-                  <Youtube className="absolute inset-0 m-auto h-8 w-8 text-white bg-red-600 rounded-full p-1" />
+                )}
+                {media.type === 'youtube' && media.thumbnailUrl && (
+                  <div className="relative">
+                    <img 
+                      src={media.thumbnailUrl} 
+                      alt={media.name}
+                      className="w-full h-32 object-cover rounded"
+                    />
+                    <Youtube className="absolute inset-0 m-auto h-8 w-8 text-white bg-red-600 rounded-full p-1" />
+                  </div>
+                )}
+                
+                <div>
+                  <h3 className="font-medium text-sm truncate" title={media.name}>
+                    {media.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {formatFileSize(media.size)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(media.uploadedAt).toLocaleDateString('pt-BR')}
+                  </p>
                 </div>
-              )}
-              
-              <div>
-                <h3 className="font-medium text-sm truncate" title={media.name}>
-                  {media.name}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {formatFileSize(media.size)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(media.uploadedAt).toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full"
-                onClick={() => window.open(media.url, '_blank')}
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Abrir
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => window.open(media.url, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Abrir
+                </Button>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
-
-      {mediaFiles.length === 0 && (
-        <Card className="p-12 text-center">
-          <Image className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Nenhum arquivo encontrado</h3>
-          <p className="text-muted-foreground mb-4">
-            Faça upload de imagens, vídeos ou adicione links do YouTube
-          </p>
-          <div className="flex gap-2 justify-center">
-            <Button onClick={() => setIsUploadDialogOpen(true)}>
-              Fazer Upload
-            </Button>
-            <Button variant="outline" onClick={() => setIsYoutubeDialogOpen(true)}>
-              Adicionar YouTube
-            </Button>
-          </div>
-        </Card>
-      )}
     </div>
   );
 };
