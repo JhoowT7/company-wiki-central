@@ -8,6 +8,8 @@ import PageEditor from "@/components/editor/PageEditor";
 import AdminSettings from "@/components/settings/AdminSettings";
 import CategoryManager from "@/components/category/CategoryManager";
 import BackupManager from "@/components/backup/BackupManager";
+import FolderManager from "@/components/folder/FolderManager";
+import MediaManager from "@/components/media/MediaManager";
 import { ViewMode } from "@/types";
 
 const Index = () => {
@@ -103,6 +105,18 @@ const Index = () => {
         return (
           <div className="animate-fade-in">
             <BackupManager />
+          </div>
+        );
+      case 'folders':
+        return (
+          <div className="animate-fade-in">
+            <FolderManager />
+          </div>
+        );
+      case 'media':
+        return (
+          <div className="animate-fade-in">
+            <MediaManager />
           </div>
         );
       default:

@@ -1,5 +1,4 @@
-
-export type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs' | 'kanban' | 'table' | 'graph';
+export type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs' | 'kanban' | 'table' | 'graph' | 'backup' | 'folders' | 'media';
 
 export interface User {
   id: string;
@@ -68,6 +67,19 @@ export interface Page {
   templateCategory?: string;
 }
 
+export interface MediaFile {
+  id: string;
+  name: string;
+  url: string;
+  type: 'image' | 'video' | 'audio' | 'document' | 'youtube';
+  size?: number;
+  thumbnailUrl?: string;
+  duration?: number;
+  uploadedBy: string;
+  uploadedAt: Date;
+  folderId?: string;
+}
+
 export interface Comment {
   id: string;
   pageId: string;
@@ -107,6 +119,7 @@ export interface CTF {
   createdAt: Date;
   completedBy: string[];
   hints: string[];
+  imageUrl?: string;
 }
 
 export interface KanbanBoard {
@@ -178,6 +191,7 @@ export interface Backup {
     versions: Version[];
     ctfs: CTF[];
     kanbanBoards: KanbanBoard[];
+    mediaFiles: MediaFile[];
   };
   createdBy: string;
   createdAt: Date;
@@ -194,4 +208,5 @@ export interface DatabaseState {
   ctfs: CTF[];
   kanbanBoards: KanbanBoard[];
   backups: Backup[];
+  mediaFiles: MediaFile[];
 }

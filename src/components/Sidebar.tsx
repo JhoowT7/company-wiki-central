@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Folder, File, Plus, Target, Database, ArrowLeft } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, File, Plus, Target, Database, ArrowLeft, Image, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -274,10 +274,18 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-sm h-8 transition-all duration-300 hover:bg-accent/50 hover:scale-[1.02] hover:shadow-md group"
-                  onClick={() => onViewChange('categories')}
+                  onClick={() => onViewChange('folders')}
                 >
-                  <Folder className="h-3 w-3 mr-2 text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-300" />
-                  Gerenciar Categorias
+                  <FolderPlus className="h-3 w-3 mr-2 text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-300" />
+                  Gerenciar Pastas
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-sm h-8 transition-all duration-300 hover:bg-accent/50 hover:scale-[1.02] hover:shadow-md group"
+                  onClick={() => onViewChange('media')}
+                >
+                  <Image className="h-3 w-3 mr-2 text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-300" />
+                  Biblioteca de Mídia
                 </Button>
                 <Button
                   variant="ghost"

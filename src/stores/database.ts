@@ -1,5 +1,5 @@
 
-import { DatabaseState, Folder, Page, User, CTF, KanbanBoard, Backup } from '@/types';
+import { DatabaseState, Folder, Page, User, CTF, KanbanBoard, Backup, MediaFile } from '@/types';
 
 // Sistema de banco de dados em memória
 class DatabaseManager {
@@ -11,7 +11,8 @@ class DatabaseManager {
     versions: [],
     ctfs: [],
     kanbanBoards: [],
-    backups: []
+    backups: [],
+    mediaFiles: []
   };
 
   private listeners: Set<() => void> = new Set();
@@ -175,19 +176,33 @@ class DatabaseManager {
     return this.data.pages;
   }
 
-  createPage(page: Omit<Page, 'id' | 'metadata' | 'viewCount'>): Page {
+  createPage(pageData: {
+    title: string;
+    content: string;
+    folderId?: string;
+    status?: Page['status'];
+    priority?: Page['priority'];
+    tags?: string[];
+    category?: string;
+  }): Page {
     const newPage: Page = {
-      ...page,
       id: `page-${Date.now()}`,
+      title: pageData.title,
+      content: pageData.content,
+      folderId: pageData.folderId,
+      status: pageData.status || 'draft',
+      priority: pageData.priority || 'medium',
       metadata: {
         createdBy: 'user-1',
         createdAt: new Date(),
         updatedAt: new Date(),
         version: 1,
-        tags: [],
-        ...page.metadata
+        tags: pageData.tags || [],
+        category: pageData.category
       },
-      viewCount: 0
+      permissions: { read: ['*'], write: ['admin'], comment: ['*'] },
+      viewCount: 0,
+      isTemplate: false
     };
     this.data.pages.push(newPage);
     this.notify();
@@ -237,6 +252,49 @@ class DatabaseManager {
     return newCTF;
   }
 
+  updateCTF(id: string, updates: Partial<CTF>): CTF | null {
+    const index = this.data.ctfs.findIndex(c => c.id === id);
+    if (index === -1) return null;
+    
+    this.data.ctfs[index] = { ...this.data.ctfs[index], ...updates };
+    this.notify();
+    return this.data.ctfs[index];
+  }
+
+  deleteCTF(id: string): boolean {
+    const index = this.data.ctfs.findIndex(c => c.id === id);
+    if (index === -1) return false;
+    
+    this.data.ctfs.splice(index, 1);
+    this.notify();
+    return true;
+  }
+
+  // Métodos para Mídia
+  getMediaFiles(): MediaFile[] {
+    return this.data.mediaFiles;
+  }
+
+  createMediaFile(media: Omit<MediaFile, 'id' | 'uploadedAt'>): MediaFile {
+    const newMedia: MediaFile = {
+      ...media,
+      id: `media-${Date.now()}`,
+      uploadedAt: new Date()
+    };
+    this.data.mediaFiles.push(newMedia);
+    this.notify();
+    return newMedia;
+  }
+
+  deleteMediaFile(id: string): boolean {
+    const index = this.data.mediaFiles.findIndex(m => m.id === id);
+    if (index === -1) return false;
+    
+    this.data.mediaFiles.splice(index, 1);
+    this.notify();
+    return true;
+  }
+
   // Sistema de Backup
   createBackup(name: string, description?: string): Backup {
     const backup: Backup = {
@@ -277,6 +335,15 @@ class DatabaseManager {
     if (!backup) throw new Error('Backup não encontrado');
     
     return JSON.stringify(backup, null, 2);
+  }
+
+  deleteBackup(id: string): boolean {
+    const index = this.data.backups.findIndex(b => b.id === id);
+    if (index === -1) return false;
+    
+    this.data.backups.splice(index, 1);
+    this.notify();
+    return true;
   }
 
   // Busca avançada
@@ -325,6 +392,7 @@ class DatabaseManager {
       totalPages: this.data.pages.length,
       totalCTFs: this.data.ctfs.length,
       totalBackups: this.data.backups.length,
+      totalMediaFiles: this.data.mediaFiles.length,
       recentPages: this.data.pages
         .sort((a, b) => b.metadata.updatedAt.getTime() - a.metadata.updatedAt.getTime())
         .slice(0, 5),

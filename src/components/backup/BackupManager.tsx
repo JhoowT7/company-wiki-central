@@ -1,141 +1,88 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Download, Upload, Trash2, Database, AlertCircle, Check, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Download, 
-  Upload, 
-  Database, 
-  Calendar, 
-  FileText, 
-  Shield, 
-  Trash2,
-  RefreshCw,
-  AlertTriangle,
-  CheckCircle,
-  Clock
-} from "lucide-react";
 import { database } from "@/stores/database";
 import { Backup } from "@/types";
-import { useToast } from "@/hooks/use-toast";
 
 const BackupManager = () => {
   const [backups, setBackups] = useState<Backup[]>([]);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newBackupName, setNewBackupName] = useState("");
   const [newBackupDescription, setNewBackupDescription] = useState("");
-  const [stats, setStats] = useState({
-    totalFolders: 0,
-    totalPages: 0,
-    totalCTFs: 0,
-    totalBackups: 0
-  });
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = database.subscribe(() => {
+    const loadBackups = () => {
       setBackups(database.getBackups());
-      setStats(database.getStats());
-    });
+    };
 
-    // Carregar dados iniciais
-    setBackups(database.getBackups());
-    setStats(database.getStats());
-
+    loadBackups();
+    const unsubscribe = database.subscribe(loadBackups);
     return unsubscribe;
   }, []);
 
-  const handleCreateBackup = async () => {
-    if (!newBackupName.trim()) {
-      toast({
-        title: "Erro",
-        description: "Nome do backup é obrigatório",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsCreating(true);
+  const createBackup = async () => {
+    if (!newBackupName.trim()) return;
+    
+    setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simular processamento
-      
-      const backup = database.createBackup(
-        newBackupName.trim(),
-        newBackupDescription.trim() || undefined
-      );
-
-      toast({
-        title: "Backup criado com sucesso!",
-        description: `Backup "${backup.name}" foi criado e salvo.`,
-      });
-
+      const backup = database.createBackup(newBackupName, newBackupDescription);
+      console.log("Backup criado:", backup);
       setNewBackupName("");
       setNewBackupDescription("");
+      setIsCreateDialogOpen(false);
     } catch (error) {
-      toast({
-        title: "Erro ao criar backup",
-        description: "Ocorreu um erro durante a criação do backup.",
-        variant: "destructive"
-      });
+      console.error("Erro ao criar backup:", error);
     } finally {
-      setIsCreating(false);
+      setIsLoading(false);
     }
   };
 
-  const handleRestoreBackup = async (backupId: string) => {
-    const backup = backups.find(b => b.id === backupId);
-    if (!backup) return;
+  const downloadBackup = (backupId: string) => {
+    try {
+      const backupData = database.exportBackup(backupId);
+      const blob = new Blob([backupData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup-${backupId}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erro ao baixar backup:", error);
+    }
+  };
 
+  const restoreBackup = (backupId: string) => {
     try {
       const success = database.restoreBackup(backupId);
       if (success) {
-        toast({
-          title: "Backup restaurado!",
-          description: `Sistema restaurado para o estado do backup "${backup.name}".`,
-        });
+        console.log("Backup restaurado com sucesso");
+      } else {
+        console.error("Falha ao restaurar backup");
       }
     } catch (error) {
-      toast({
-        title: "Erro ao restaurar backup",
-        description: "Não foi possível restaurar o backup selecionado.",
-        variant: "destructive"
-      });
+      console.error("Erro ao restaurar backup:", error);
     }
   };
 
-  const handleDownloadBackup = (backupId: string) => {
+  const deleteBackup = (backupId: string) => {
     try {
-      const backup = backups.find(b => b.id === backupId);
-      if (!backup) return;
-
-      const dataStr = database.exportBackup(backupId);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${backup.name}_${backup.createdAt.toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: "Download iniciado",
-        description: "O arquivo de backup está sendo baixado.",
-      });
+      const success = database.deleteBackup(backupId);
+      if (success) {
+        console.log("Backup deletado com sucesso");
+      }
     } catch (error) {
-      toast({
-        title: "Erro no download",
-        description: "Não foi possível baixar o backup.",
-        variant: "destructive"
-      });
+      console.error("Erro ao deletar backup:", error);
     }
   };
 
@@ -158,213 +105,144 @@ const BackupManager = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-8 animate-fade-in">
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          Gerenciamento de Backups
-        </h1>
-        <p className="text-muted-foreground">
-          Crie, gerencie e restaure backups completos do seu sistema
-        </p>
-      </div>
-
-      {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="hover-glow transition-all duration-300 border-l-4 border-l-blue-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <Database className="h-8 w-8 text-primary" />
+            Gerenciamento de Backup
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Crie, restaure e gerencie backups do seu sistema
+          </p>
+        </div>
+        
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
+              <Database className="h-4 w-4 mr-2" />
+              Criar Backup
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Criar Novo Backup</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pastas</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.totalFolders}</p>
-              </div>
-              <Database className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover-glow transition-all duration-300 border-l-4 border-l-green-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Páginas</p>
-                <p className="text-2xl font-bold text-green-600">{stats.totalPages}</p>
-              </div>
-              <FileText className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover-glow transition-all duration-300 border-l-4 border-l-purple-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">CTFs</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.totalCTFs}</p>
-              </div>
-              <Shield className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover-glow transition-all duration-300 border-l-4 border-l-orange-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Backups</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.totalBackups}</p>
-              </div>
-              <Calendar className="h-8 w-8 text-orange-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Criar Novo Backup */}
-        <div className="lg:col-span-1">
-          <Card className="hover-lift">
-            <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5">
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5" />
-                Criar Novo Backup
-              </CardTitle>
-              <CardDescription>
-                Gere um backup completo dos dados atuais
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="backup-name">Nome do Backup</Label>
+                <Label htmlFor="backupName">Nome do Backup</Label>
                 <Input
-                  id="backup-name"
-                  placeholder="Ex: Backup Mensal Janeiro 2024"
+                  id="backupName"
                   value={newBackupName}
                   onChange={(e) => setNewBackupName(e.target.value)}
-                  className="focus-ring"
+                  placeholder="Ex: Backup Semanal - Janeiro 2024"
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="backup-description">Descrição (Opcional)</Label>
+              <div>
+                <Label htmlFor="backupDescription">Descrição (opcional)</Label>
                 <Textarea
-                  id="backup-description"
-                  placeholder="Descreva o motivo ou contexto deste backup..."
+                  id="backupDescription"
                   value={newBackupDescription}
                   onChange={(e) => setNewBackupDescription(e.target.value)}
-                  className="min-h-[80px] focus-ring"
+                  placeholder="Descreva o que este backup contém..."
                 />
               </div>
-
               <Button 
-                onClick={handleCreateBackup}
-                disabled={isCreating || !newBackupName.trim()}
-                className="w-full hover-scale"
+                onClick={createBackup} 
+                disabled={!newBackupName.trim() || isLoading}
+                className="w-full"
               >
-                {isCreating ? (
+                {isLoading ? (
                   <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Criando Backup...
+                    <Clock className="h-4 w-4 mr-2 animate-spin" />
+                    Criando...
                   </>
                 ) : (
                   <>
-                    <Database className="mr-2 h-4 w-4" />
+                    <Database className="h-4 w-4 mr-2" />
                     Criar Backup
                   </>
                 )}
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-              <div className="text-xs text-muted-foreground p-3 bg-muted/50 rounded-lg">
-                <AlertTriangle className="h-4 w-4 inline mr-1" />
-                O backup incluirá todas as pastas, páginas, CTFs e configurações atuais.
-              </div>
-            </CardContent>
+      {/* Lista de Backups */}
+      <div className="grid gap-4">
+        {backups.length === 0 ? (
+          <Card className="p-12 text-center">
+            <Database className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhum backup encontrado</h3>
+            <p className="text-muted-foreground mb-4">
+              Crie seu primeiro backup para proteger seus dados
+            </p>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              Criar Primeiro Backup
+            </Button>
           </Card>
-        </div>
-
-        {/* Lista de Backups */}
-        <div className="lg:col-span-2">
-          <Card className="hover-lift">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Backups Disponíveis
-              </CardTitle>
-              <CardDescription>
-                Histórico de backups criados
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ScrollArea className="h-[600px]">
-                {backups.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground">
-                    <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg font-medium mb-2">Nenhum backup encontrado</p>
-                    <p className="text-sm">Crie seu primeiro backup para começar</p>
+        ) : (
+          backups.map((backup) => (
+            <Card key={backup.id} className="hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Database className="h-5 w-5 text-primary" />
+                      {backup.name}
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      {backup.description || "Sem descrição"}
+                    </CardDescription>
                   </div>
-                ) : (
-                  <div className="space-y-4 p-6">
-                    {backups.map((backup, index) => (
-                      <Card 
-                        key={backup.id} 
-                        className="hover-glow transition-all duration-300 border-l-4 border-l-primary/50"
-                        style={{animationDelay: `${index * 0.1}s`}}
-                      >
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="font-semibold text-lg">{backup.name}</h3>
-                                <Badge variant={backup.type === 'manual' ? 'default' : 'secondary'}>
-                                  {backup.type === 'manual' ? 'Manual' : 'Automático'}
-                                </Badge>
-                              </div>
-                              
-                              {backup.description && (
-                                <p className="text-muted-foreground mb-3">{backup.description}</p>
-                              )}
-                              
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 text-muted-foreground" />
-                                  <span>{formatDate(backup.createdAt)}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Database className="h-4 w-4 text-muted-foreground" />
-                                  <span>{formatFileSize(backup.size)}</span>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="flex flex-col gap-2 ml-4">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDownloadBackup(backup.id)}
-                                className="hover-scale"
-                              >
-                                <Download className="h-4 w-4 mr-1" />
-                                Baixar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => handleRestoreBackup(backup.id)}
-                                className="hover-scale"
-                              >
-                                <RefreshCw className="h-4 w-4 mr-1" />
-                                Restaurar
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                  <div className="flex flex-col items-end gap-2">
+                    <Badge variant={backup.type === 'manual' ? 'default' : 'secondary'}>
+                      {backup.type === 'manual' ? 'Manual' : 'Automático'}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {formatFileSize(backup.size)}
+                    </span>
                   </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    <p>Criado em: {formatDate(backup.createdAt)}</p>
+                    <p>Por: {backup.createdBy}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadBackup(backup.id)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Baixar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => restoreBackup(backup.id)}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Restaurar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteBackup(backup.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
