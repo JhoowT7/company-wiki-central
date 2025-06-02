@@ -18,7 +18,7 @@ class DatabaseManager {
   private listeners: Set<() => void> = new Set();
 
   constructor() {
-    this.initializeWithMockData();
+    this.initializeWithUser();
   }
 
   // Subscription para atualizações
@@ -31,8 +31,8 @@ class DatabaseManager {
     this.listeners.forEach(callback => callback());
   }
 
-  // Inicializar com usuário padrão apenas
-  private initializeWithMockData() {
+  // Inicializar apenas com usuário admin
+  private initializeWithUser() {
     this.data.users = [
       {
         id: 'user-1',
@@ -46,11 +46,15 @@ class DatabaseManager {
       }
     ];
 
-    // Deixar arrays vazios para começar limpo
+    // Todos os outros arrays começam vazios
     this.data.folders = [];
     this.data.pages = [];
     this.data.ctfs = [];
     this.data.mediaFiles = [];
+    this.data.backups = [];
+    this.data.comments = [];
+    this.data.versions = [];
+    this.data.kanbanBoards = [];
   }
 
   // Métodos CRUD para Pastas
