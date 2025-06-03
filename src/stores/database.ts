@@ -1,9 +1,20 @@
 
 import { DatabaseState, Folder, Page, User, CTF, KanbanBoard, Backup, MediaFile } from '@/types';
 
+// Interface para Categoria
+interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Sistema de banco de dados em memória
 class DatabaseManager {
-  private data: DatabaseState = {
+  private data: DatabaseState & { categories: Category[] } = {
     users: [],
     folders: [],
     pages: [],
@@ -12,7 +23,8 @@ class DatabaseManager {
     ctfs: [],
     kanbanBoards: [],
     backups: [],
-    mediaFiles: []
+    mediaFiles: [],
+    categories: []
   };
 
   private listeners: Set<() => void> = new Set();
@@ -55,6 +67,46 @@ class DatabaseManager {
     this.data.comments = [];
     this.data.versions = [];
     this.data.kanbanBoards = [];
+    this.data.categories = [];
+  }
+
+  // Métodos CRUD para Categorias
+  getCategories(): Category[] {
+    return this.data.categories;
+  }
+
+  createCategory(category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Category {
+    const newCategory: Category = {
+      ...category,
+      id: `category-${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.data.categories.push(newCategory);
+    this.notify();
+    return newCategory;
+  }
+
+  updateCategory(id: string, updates: Partial<Category>): Category | null {
+    const index = this.data.categories.findIndex(c => c.id === id);
+    if (index === -1) return null;
+    
+    this.data.categories[index] = {
+      ...this.data.categories[index],
+      ...updates,
+      updatedAt: new Date()
+    };
+    this.notify();
+    return this.data.categories[index];
+  }
+
+  deleteCategory(id: string): boolean {
+    const index = this.data.categories.findIndex(c => c.id === id);
+    if (index === -1) return false;
+    
+    this.data.categories.splice(index, 1);
+    this.notify();
+    return true;
   }
 
   // Métodos CRUD para Pastas
@@ -325,6 +377,7 @@ class DatabaseManager {
       totalCTFs: this.data.ctfs.length,
       totalBackups: this.data.backups.length,
       totalMediaFiles: this.data.mediaFiles.length,
+      totalCategories: this.data.categories.length,
       recentPages: this.data.pages
         .sort((a, b) => b.metadata.updatedAt.getTime() - a.metadata.updatedAt.getTime())
         .slice(0, 5),

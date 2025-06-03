@@ -1,396 +1,316 @@
 
-import { useState, useCallback } from "react";
-import { Plus, Edit, Trash2, FolderPlus, Folder, FileText, ChevronRight, ChevronDown, GripVertical } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Tag, Edit, Trash2, Palette, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { database } from "@/stores/database";
+import { useToast } from "@/hooks/use-toast";
 
 interface Category {
   id: string;
   name: string;
-  parentId?: string;
-  children?: Category[];
-  pages?: any[];
-  isExpanded?: boolean;
-  depth?: number;
+  description?: string;
+  color?: string;
+  icon?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const CategoryManager = () => {
-  const [categories, setCategories] = useState<Category[]>([
-    {
-      id: "1",
-      name: "Recursos Humanos",
-      isExpanded: true,
-      children: [
-        { 
-          id: "1.1", 
-          name: "Benefícios", 
-          parentId: "1",
-          isExpanded: false,
-          children: [
-            { id: "1.1.1", name: "Plano de Saúde", parentId: "1.1" },
-            { id: "1.1.2", name: "Vale Refeição", parentId: "1.1" },
-          ]
-        },
-        { 
-          id: "1.2", 
-          name: "Políticas", 
-          parentId: "1",
-          isExpanded: false,
-          children: [
-            { id: "1.2.1", name: "Código de Conduta", parentId: "1.2" },
-            { id: "1.2.2", name: "Home Office", parentId: "1.2" },
-          ]
-        },
-      ]
-    },
-    {
-      id: "2",
-      name: "TI",
-      isExpanded: true,
-      children: [
-        { 
-          id: "2.1", 
-          name: "Segurança", 
-          parentId: "2",
-          isExpanded: false,
-          children: [
-            { id: "2.1.1", name: "Senhas", parentId: "2.1" },
-            { id: "2.1.2", name: "VPN", parentId: "2.1" },
-          ]
-        },
-        { id: "2.2", name: "Inventário", parentId: "2" },
-      ]
-    },
-    {
-      id: "3",
-      name: "Comercial",
-      isExpanded: false,
-      children: [
-        { 
-          id: "3.1", 
-          name: "Vendas", 
-          parentId: "3",
-          children: [
-            { id: "3.1.1", name: "Scripts", parentId: "3.1" },
-            { id: "3.1.2", name: "Propostas", parentId: "3.1" },
-          ]
-        },
-        { id: "3.2", name: "Atendimento", parentId: "3" },
-      ]
-    }
-  ]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [newCategory, setNewCategory] = useState({
+    name: '',
+    description: '',
+    color: '#3b82f6',
+    icon: '📝'
+  });
+  const { toast } = useToast();
 
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [draggedItem, setDraggedItem] = useState<Category | null>(null);
+  const colors = [
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', 
+    '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
+  ];
 
-  const buildTree = useCallback((data: Category[], parentId?: string): Category[] => {
-    return data
-      .filter(item => item.parentId === parentId)
-      .map(item => ({
-        ...item,
-        children: buildTree(data, item.id),
-      }));
+  const icons = ['📝', '📚', '🔧', '💼', '🎯', '🚀', '💡', '🔍'];
+
+  useEffect(() => {
+    const loadCategories = () => {
+      setCategories(database.getCategories());
+    };
+
+    loadCategories();
+    const unsubscribe = database.subscribe(loadCategories);
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
-  const flattenCategories = useCallback((categories: Category[]): Category[] => {
-    const result: Category[] = [];
-    
-    const flatten = (cats: Category[], depth = 0) => {
-      cats.forEach(cat => {
-        result.push({ ...cat, depth });
-        if (cat.children && cat.children.length > 0) {
-          flatten(cat.children, depth + 1);
-        }
+  const createCategory = () => {
+    if (!newCategory.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da categoria é obrigatório",
+        variant: "destructive"
       });
-    };
-    
-    flatten(categories);
-    return result;
-  }, []);
+      return;
+    }
 
-  const toggleCategory = (categoryId: string) => {
-    const updateExpanded = (cats: Category[]): Category[] => {
-      return cats.map(cat => ({
-        ...cat,
-        isExpanded: cat.id === categoryId ? !cat.isExpanded : cat.isExpanded,
-        children: cat.children ? updateExpanded(cat.children) : undefined
-      }));
-    };
-    
-    setCategories(updateExpanded);
+    try {
+      database.createCategory(newCategory);
+      
+      toast({
+        title: "Sucesso",
+        description: "Categoria criada com sucesso!",
+      });
+
+      setNewCategory({ name: '', description: '', color: '#3b82f6', icon: '📝' });
+      setIsCreateDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao criar categoria",
+        variant: "destructive"
+      });
+    }
   };
 
-  const createCategory = (name: string, parentId?: string) => {
-    const newCategory: Category = {
-      id: Date.now().toString(),
-      name,
-      parentId,
-      children: [],
-      isExpanded: false
-    };
-
-    if (parentId) {
-      const updateTree = (cats: Category[]): Category[] => {
-        return cats.map(cat => {
-          if (cat.id === parentId) {
-            return {
-              ...cat,
-              children: [...(cat.children || []), newCategory],
-              isExpanded: true
-            };
-          }
-          return {
-            ...cat,
-            children: cat.children ? updateTree(cat.children) : undefined
-          };
-        });
-      };
-      setCategories(updateTree);
-    } else {
-      setCategories(prev => [...prev, newCategory]);
+  const updateCategory = () => {
+    if (!editingCategory || !newCategory.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da categoria é obrigatório",
+        variant: "destructive"
+      });
+      return;
     }
 
-    setNewCategoryName("");
-    setIsDialogOpen(false);
+    try {
+      const success = database.updateCategory(editingCategory.id, newCategory);
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Categoria atualizada com sucesso!",
+        });
+        setEditingCategory(null);
+        setNewCategory({ name: '', description: '', color: '#3b82f6', icon: '📝' });
+      } else {
+        toast({
+          title: "Erro",
+          description: "Categoria não encontrada",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar categoria",
+        variant: "destructive"
+      });
+    }
   };
 
   const deleteCategory = (id: string) => {
-    const removeFromTree = (cats: Category[]): Category[] => {
-      return cats
-        .filter(cat => cat.id !== id)
-        .map(cat => ({
-          ...cat,
-          children: cat.children ? removeFromTree(cat.children) : undefined
-        }));
-    };
-    
-    setCategories(removeFromTree);
-  };
-
-  const onDragStart = (e: React.DragEvent, category: Category) => {
-    setDraggedItem(category);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const onDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const onDrop = (e: React.DragEvent, targetCategory: Category) => {
-    e.preventDefault();
-    
-    if (!draggedItem || draggedItem.id === targetCategory.id) return;
-
-    // Remove from old position and add to new position
-    const updateTree = (cats: Category[]): Category[] => {
-      const filtered = cats.filter(cat => cat.id !== draggedItem.id);
-      
-      return filtered.map(cat => {
-        if (cat.id === targetCategory.id) {
-          return {
-            ...cat,
-            children: [...(cat.children || []), { ...draggedItem, parentId: targetCategory.id }],
-            isExpanded: true
-          };
-        }
-        return {
-          ...cat,
-          children: cat.children ? updateTree(cat.children) : undefined
-        };
+    try {
+      const success = database.deleteCategory(id);
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Categoria excluída com sucesso!",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: "Categoria não encontrada",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir categoria",
+        variant: "destructive"
       });
-    };
-
-    setCategories(updateTree);
-    setDraggedItem(null);
+    }
   };
 
-  const CategoryTreeItem = ({ category, depth = 0 }: { category: Category; depth?: number }) => {
-    const hasChildren = category.children && category.children.length > 0;
-    const indentLevel = depth * 20;
+  const startEdit = (category: Category) => {
+    setEditingCategory(category);
+    setNewCategory({
+      name: category.name,
+      description: category.description || '',
+      color: category.color || '#3b82f6',
+      icon: category.icon || '📝'
+    });
+    setIsCreateDialogOpen(true);
+  };
 
-    return (
-      <div className="animate-fade-in">
-        <div 
-          className={`group flex items-center justify-between p-2 hover:bg-muted/50 rounded-md cursor-pointer transition-all duration-200 hover:shadow-sm ${
-            draggedItem?.id === category.id ? 'opacity-50' : ''
-          }`}
-          style={{ marginLeft: `${indentLevel}px` }}
-          draggable
-          onDragStart={(e) => onDragStart(e, category)}
-          onDragOver={onDragOver}
-          onDrop={(e) => onDrop(e, category)}
-        >
-          <div className="flex items-center gap-2 flex-1">
-            <div className="flex items-center gap-1">
-              <GripVertical className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              
-              {hasChildren ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => toggleCategory(category.id)}
-                >
-                  {category.isExpanded ? (
-                    <ChevronDown className="h-3 w-3 transition-transform duration-200" />
-                  ) : (
-                    <ChevronRight className="h-3 w-3 transition-transform duration-200" />
-                  )}
-                </Button>
-              ) : (
-                <div className="w-6" />
-              )}
-              
-              <Folder className="h-4 w-4 text-blue-500" />
-            </div>
-            
-            <span className="font-medium select-none">{category.name}</span>
-            
-            <div className="flex items-center gap-1">
-              <Badge variant="outline" className="text-xs">
-                {category.children?.length || 0} sub
-              </Badge>
-              <Badge variant="secondary" className="text-xs">
-                {category.pages?.length || Math.floor(Math.random() * 10)} páginas
-              </Badge>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 hover:bg-blue-100 hover:text-blue-600"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedCategory(category);
-                setIsDialogOpen(true);
-              }}
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="h-6 w-6 p-0 hover:bg-green-100 hover:text-green-600"
-            >
-              <Edit className="h-3 w-3" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600"
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteCategory(category.id);
-              }}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-        
-        {hasChildren && category.isExpanded && (
-          <div className="animate-accordion-down">
-            {category.children!.map(child => (
-              <CategoryTreeItem key={child.id} category={child} depth={depth + 1} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
+  const resetForm = () => {
+    setEditingCategory(null);
+    setNewCategory({ name: '', description: '', color: '#3b82f6', icon: '📝' });
+    setIsCreateDialogOpen(false);
   };
 
   return (
-    <div className="p-6">
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <FolderPlus className="h-5 w-5 text-primary" />
-              </div>
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <Tag className="h-8 w-8 text-primary" />
+            Gerenciamento de Categorias
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Organize seu conteúdo com categorias personalizadas
+          </p>
+        </div>
+        
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-primary hover:bg-primary/90" onClick={() => resetForm()}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Categoria
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {editingCategory ? 'Editar Categoria' : 'Criar Nova Categoria'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
               <div>
-                <h2 className="text-xl font-semibold">Gerenciamento de Categorias</h2>
-                <p className="text-sm text-muted-foreground">Estrutura hierárquica com suporte ilimitado a subpastas</p>
+                <Label>Nome da Categoria</Label>
+                <Input
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                  placeholder="Digite o nome da categoria"
+                />
               </div>
-            </div>
-            
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  onClick={() => setSelectedCategory(null)}
-                  className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  <FolderPlus className="h-4 w-4 mr-2" />
-                  Nova Categoria
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Folder className="h-5 w-5 text-primary" />
-                    {selectedCategory ? 
-                      `Nova subcategoria em "${selectedCategory.name}"` : 
-                      "Nova Categoria Principal"
-                    }
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="categoryName">Nome da Categoria</Label>
-                    <Input
-                      id="categoryName"
-                      value={newCategoryName}
-                      onChange={(e) => setNewCategoryName(e.target.value)}
-                      placeholder="Digite o nome da categoria..."
-                      className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+              
+              <div>
+                <Label>Descrição (opcional)</Label>
+                <Textarea
+                  value={newCategory.description}
+                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                  placeholder="Descrição da categoria"
+                />
+              </div>
+
+              <div>
+                <Label>Cor</Label>
+                <div className="flex gap-2 mt-2">
+                  {colors.map((color) => (
+                    <button
+                      key={color}
+                      className={`w-8 h-8 rounded-full border-2 ${
+                        newCategory.color === color ? 'border-gray-900' : 'border-gray-300'
+                      }`}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setNewCategory({ ...newCategory, color })}
                     />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setIsDialogOpen(false)}
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label>Ícone</Label>
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {icons.map((icon) => (
+                    <button
+                      key={icon}
+                      className={`w-10 h-10 rounded border-2 text-lg ${
+                        newCategory.icon === icon ? 'border-primary bg-primary/10' : 'border-gray-300'
+                      }`}
+                      onClick={() => setNewCategory({ ...newCategory, icon })}
                     >
-                      Cancelar
+                      {icon}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Button 
+                onClick={editingCategory ? updateCategory : createCategory} 
+                disabled={!newCategory.name.trim()} 
+                className="w-full"
+              >
+                {editingCategory ? 'Atualizar Categoria' : 'Criar Categoria'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Lista de Categorias */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {categories.length === 0 ? (
+          <Card className="col-span-full p-12 text-center">
+            <Tag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhuma categoria encontrada</h3>
+            <p className="text-muted-foreground mb-4">
+              Crie sua primeira categoria para organizar o conteúdo
+            </p>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              Criar Primeira Categoria
+            </Button>
+          </Card>
+        ) : (
+          categories.map((category) => (
+            <Card key={category.id} className="hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm"
+                    style={{ backgroundColor: category.color }}
+                  >
+                    {category.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{category.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(category.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {category.description && (
+                  <p className="text-sm text-muted-foreground mb-4">{category.description}</p>
+                )}
+                <div className="flex justify-between items-center">
+                  <Badge variant="outline" style={{ color: category.color, borderColor: category.color }}>
+                    <Hash className="h-3 w-3 mr-1" />
+                    {category.name}
+                  </Badge>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => startEdit(category)}
+                    >
+                      <Edit className="h-4 w-4" />
                     </Button>
                     <Button 
-                      onClick={() => createCategory(newCategoryName, selectedCategory?.id)}
-                      disabled={!newCategoryName.trim()}
-                      className="bg-primary hover:bg-primary/90"
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => deleteCategory(category.id)}
+                      className="text-red-600 hover:text-red-700"
                     >
-                      Criar Categoria
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </CardTitle>
-        </CardHeader>
-        
-        <CardContent>
-          <div className="space-y-1 max-h-[600px] overflow-y-auto custom-scrollbar">
-            {categories.map(category => (
-              <CategoryTreeItem key={category.id} category={category} />
-            ))}
-          </div>
-          
-          {categories.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <Folder className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhuma categoria criada ainda.</p>
-              <p className="text-sm">Clique em "Nova Categoria" para começar.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 };
