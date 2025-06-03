@@ -10,7 +10,8 @@ import CategoryManager from "@/components/category/CategoryManager";
 import BackupManager from "@/components/backup/BackupManager";
 import FolderManager from "@/components/folder/FolderManager";
 import MediaManager from "@/components/media/MediaManager";
-import type { ViewMode } from "@/types";
+
+type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs' | 'kanban' | 'table' | 'graph' | 'backup' | 'folders' | 'media';
 
 const Index = () => {
   const [selectedPage, setSelectedPage] = useState<string | null>(null);

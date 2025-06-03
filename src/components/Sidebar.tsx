@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight, Folder, File, Plus, Target, Database, ArrowLeft, Image, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,16 +23,26 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
   const [pages, setPages] = useState<Page[]>([]);
 
   useEffect(() => {
+    console.log("Sidebar: Carregando dados do banco");
+    
     const loadData = () => {
-      setFolders(database.getFolders());
-      setPages(database.getPages());
+      const loadedFolders = database.getFolders();
+      const loadedPages = database.getPages();
+      
+      console.log("Sidebar: Pastas carregadas:", loadedFolders);
+      console.log("Sidebar: Páginas carregadas:", loadedPages);
+      
+      setFolders(loadedFolders);
+      setPages(loadedPages);
     };
 
     loadData();
-    const unsubscribe = database.subscribe(loadData);
-    return () => {
-      unsubscribe();
-    };
+    const unsubscribe = database.subscribe(() => {
+      console.log("Sidebar: Dados atualizados no banco");
+      loadData();
+    });
+    
+    return unsubscribe;
   }, []);
 
   const toggleFolder = (folderId: string) => {
@@ -176,7 +187,9 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
             {/* Folders */}
             <div className="animate-slide-up">
               <div className="flex items-center justify-between mb-3 px-1">
-                <h3 className="font-medium text-sm text-muted-foreground">Pastas</h3>
+                <h3 className="font-medium text-sm text-muted-foreground">
+                  Pastas ({folders.length})
+                </h3>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -189,7 +202,7 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
               
               <div className="space-y-1">
                 {folders.length === 0 ? (
-                  <div className="text-center py-8">
+                  <div className="text-center py-4">
                     <Folder className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">
                       Nenhuma pasta ainda

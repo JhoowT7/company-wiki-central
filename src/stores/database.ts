@@ -1,4 +1,3 @@
-
 import { DatabaseState, Folder, Page, User, CTF, KanbanBoard, Backup, MediaFile } from '@/types';
 
 // Interface para Categoria
@@ -31,15 +30,22 @@ class DatabaseManager {
 
   constructor() {
     this.initializeWithUser();
+    console.log("DatabaseManager: Inicializado");
   }
 
   // Subscription para atualizações
   subscribe(callback: () => void) {
+    console.log("DatabaseManager: Nova subscrição adicionada");
     this.listeners.add(callback);
-    return () => this.listeners.delete(callback);
+    return () => {
+      console.log("DatabaseManager: Subscrição removida");
+      this.listeners.delete(callback);
+    };
   }
 
   private notify() {
+    console.log("DatabaseManager: Notificando todas as subscrições de mudanças");
+    console.log("DatabaseManager: Número de ouvintes:", this.listeners.size);
     this.listeners.forEach(callback => callback());
   }
 
@@ -72,10 +78,12 @@ class DatabaseManager {
 
   // Métodos CRUD para Categorias
   getCategories(): Category[] {
+    console.log("DatabaseManager: Obtendo categorias");
     return this.data.categories;
   }
 
   createCategory(category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Category {
+    console.log("DatabaseManager: Criando categoria:", category);
     const newCategory: Category = {
       ...category,
       id: `category-${Date.now()}`,
@@ -88,6 +96,7 @@ class DatabaseManager {
   }
 
   updateCategory(id: string, updates: Partial<Category>): Category | null {
+    console.log("DatabaseManager: Atualizando categoria:", id, updates);
     const index = this.data.categories.findIndex(c => c.id === id);
     if (index === -1) return null;
     
@@ -101,6 +110,7 @@ class DatabaseManager {
   }
 
   deleteCategory(id: string): boolean {
+    console.log("DatabaseManager: Excluindo categoria:", id);
     const index = this.data.categories.findIndex(c => c.id === id);
     if (index === -1) return false;
     
@@ -111,10 +121,12 @@ class DatabaseManager {
 
   // Métodos CRUD para Pastas
   getFolders(): Folder[] {
+    console.log("DatabaseManager: Obtendo pastas. Total:", this.data.folders.length);
     return this.data.folders;
   }
 
   createFolder(folder: Omit<Folder, 'id' | 'metadata'>): Folder {
+    console.log("DatabaseManager: Criando pasta:", folder);
     const newFolder: Folder = {
       ...folder,
       id: `folder-${Date.now()}`,
@@ -126,11 +138,14 @@ class DatabaseManager {
       }
     };
     this.data.folders.push(newFolder);
+    console.log("DatabaseManager: Pasta criada com ID:", newFolder.id);
+    console.log("DatabaseManager: Total de pastas após criação:", this.data.folders.length);
     this.notify();
     return newFolder;
   }
 
   updateFolder(id: string, updates: Partial<Folder>): Folder | null {
+    console.log("DatabaseManager: Atualizando pasta:", id, updates);
     const index = this.data.folders.findIndex(f => f.id === id);
     if (index === -1) return null;
     
@@ -147,10 +162,12 @@ class DatabaseManager {
   }
 
   deleteFolder(id: string): boolean {
+    console.log("DatabaseManager: Excluindo pasta:", id);
     const index = this.data.folders.findIndex(f => f.id === id);
     if (index === -1) return false;
     
     this.data.folders.splice(index, 1);
+    console.log("DatabaseManager: Total de pastas após exclusão:", this.data.folders.length);
     this.notify();
     return true;
   }
@@ -371,6 +388,7 @@ class DatabaseManager {
 
   // Estatísticas
   getStats() {
+    console.log("DatabaseManager: Obtendo estatísticas");
     return {
       totalFolders: this.data.folders.length,
       totalPages: this.data.pages.length,
@@ -379,7 +397,7 @@ class DatabaseManager {
       totalMediaFiles: this.data.mediaFiles.length,
       totalCategories: this.data.categories.length,
       recentPages: this.data.pages
-        .sort((a, b) => b.metadata.updatedAt.getTime() - a.metadata.updatedAt.getTime())
+        .sort((a, b) => new Date(b.metadata.updatedAt).getTime() - new Date(a.metadata.updatedAt).getTime())
         .slice(0, 5),
       popularPages: this.data.pages
         .sort((a, b) => b.viewCount - a.viewCount)

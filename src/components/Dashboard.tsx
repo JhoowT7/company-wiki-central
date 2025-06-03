@@ -29,17 +29,29 @@ export function Dashboard({ onPageSelect, onNewPage }: DashboardProps) {
   const [pages, setPages] = useState<Page[]>([]);
 
   useEffect(() => {
+    console.log("Dashboard: Carregando dados do banco");
+    
     const loadData = () => {
-      setStats(database.getStats());
-      setFolders(database.getFolders());
-      setPages(database.getPages());
+      const newStats = database.getStats();
+      const loadedFolders = database.getFolders();
+      const loadedPages = database.getPages();
+      
+      console.log("Dashboard: Stats carregadas:", newStats);
+      console.log("Dashboard: Pastas carregadas:", loadedFolders);
+      console.log("Dashboard: Páginas carregadas:", loadedPages);
+      
+      setStats(newStats);
+      setFolders(loadedFolders);
+      setPages(loadedPages);
     };
 
     loadData();
-    const unsubscribe = database.subscribe(loadData);
-    return () => {
-      unsubscribe();
-    };
+    const unsubscribe = database.subscribe(() => {
+      console.log("Dashboard: Dados atualizados no banco");
+      loadData();
+    });
+    
+    return unsubscribe;
   }, []);
 
   const filteredPages = pages.filter(page =>
@@ -216,7 +228,7 @@ export function Dashboard({ onPageSelect, onNewPage }: DashboardProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Folder className="h-5 w-5" />
-                Pastas
+                Pastas ({folders.length})
               </CardTitle>
             </CardHeader>
             <CardContent>

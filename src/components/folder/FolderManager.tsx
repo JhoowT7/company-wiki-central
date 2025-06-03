@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Plus, Folder, Edit, Trash2, Move, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,15 +26,21 @@ const FolderManager = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log("FolderManager: Carregando pastas do banco");
+    
     const loadFolders = () => {
-      setFolders(database.getFolders());
+      const loadedFolders = database.getFolders();
+      console.log("FolderManager: Pastas carregadas:", loadedFolders);
+      setFolders(loadedFolders);
     };
 
     loadFolders();
-    const unsubscribe = database.subscribe(loadFolders);
-    return () => {
-      unsubscribe();
-    };
+    const unsubscribe = database.subscribe(() => {
+      console.log("FolderManager: Dados atualizados no banco");
+      loadFolders();
+    });
+    
+    return unsubscribe;
   }, []);
 
   const createFolder = () => {
@@ -63,7 +70,7 @@ const FolderManager = () => {
       });
 
       toast({
-        title: "Sucesso",
+        title: "Sucesso!",
         description: "Pasta criada com sucesso!",
       });
 
@@ -76,6 +83,7 @@ const FolderManager = () => {
       });
       setIsCreateDialogOpen(false);
     } catch (error) {
+      console.error("Erro ao criar pasta:", error);
       toast({
         title: "Erro",
         description: "Erro ao criar pasta",
@@ -89,7 +97,7 @@ const FolderManager = () => {
       const success = database.deleteFolder(id);
       if (success) {
         toast({
-          title: "Sucesso",
+          title: "Sucesso!",
           description: "Pasta excluída com sucesso!",
         });
       } else {
@@ -100,6 +108,7 @@ const FolderManager = () => {
         });
       }
     } catch (error) {
+      console.error("Erro ao excluir pasta:", error);
       toast({
         title: "Erro",
         description: "Erro ao excluir pasta",
@@ -141,6 +150,7 @@ const FolderManager = () => {
                   value={newFolder.name}
                   onChange={(e) => setNewFolder({ ...newFolder, name: e.target.value })}
                   placeholder="Digite o nome da pasta"
+                  autoFocus
                 />
               </div>
               
