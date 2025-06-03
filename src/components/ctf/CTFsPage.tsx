@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, ExternalLink, Edit, Trash2, Target, Globe, Shield, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,83 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-
-interface CTF {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-  link: string;
-  category: 'web' | 'crypto' | 'pwn' | 'forensics' | 'misc' | 'osint';
-  difficulty: 'easy' | 'medium' | 'hard';
-  tags: string[];
-}
-
-const mockCTFs: CTF[] = [
-  {
-    id: '1',
-    title: 'HackTheBox',
-    description: 'Plataforma premium para prática de penetration testing com máquinas virtuais reais.',
-    image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400',
-    link: 'https://www.hackthebox.com',
-    category: 'pwn',
-    difficulty: 'medium',
-    tags: ['penetration testing', 'linux', 'windows']
-  },
-  {
-    id: '2',
-    title: 'TryHackMe',
-    description: 'Aprenda segurança cibernética através de desafios práticos e laboratórios guiados.',
-    image: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400',
-    link: 'https://tryhackme.com',
-    category: 'web',
-    difficulty: 'easy',
-    tags: ['beginner friendly', 'guided', 'learning']
-  },
-  {
-    id: '3',
-    title: 'OverTheWire',
-    description: 'Wargames e desafios de segurança para todos os níveis de habilidade.',
-    image: 'https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=400',
-    link: 'https://overthewire.org',
-    category: 'crypto',
-    difficulty: 'hard',
-    tags: ['wargames', 'command line', 'linux']
-  },
-  {
-    id: '4',
-    title: 'PicoCTF',
-    description: 'Competição de segurança cibernética projetada para estudantes do ensino médio.',
-    image: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400',
-    link: 'https://picoctf.org',
-    category: 'misc',
-    difficulty: 'easy',
-    tags: ['educational', 'students', 'competition']
-  },
-  {
-    id: '5',
-    title: 'VulnHub',
-    description: 'Máquinas virtuais vulneráveis para download e prática offline.',
-    image: 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=400',
-    link: 'https://vulnhub.com',
-    category: 'forensics',
-    difficulty: 'medium',
-    tags: ['virtual machines', 'offline', 'boot2root']
-  },
-  {
-    id: '6',
-    title: 'OWASP WebGoat',
-    description: 'Aplicação web intencionalmente insegura para aprender sobre vulnerabilidades web.',
-    image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400',
-    link: 'https://owasp.org/www-project-webgoat/',
-    category: 'web',
-    difficulty: 'easy',
-    tags: ['web security', 'owasp', 'vulnerabilities']
-  }
-];
+import { database } from '@/stores/database';
+import { CTF } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 const CTFsPage: React.FC = () => {
-  const [ctfs, setCTFs] = useState<CTF[]>(mockCTFs);
+  const [ctfs, setCTFs] = useState<CTF[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
@@ -92,12 +21,26 @@ const CTFsPage: React.FC = () => {
   const [newCTF, setNewCTF] = useState<Partial<CTF>>({
     title: '',
     description: '',
-    image: '',
-    link: '',
+    url: '',
     category: 'web',
     difficulty: 'easy',
-    tags: []
+    tags: [],
+    points: 100
   });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadCTFs();
+    const unsubscribe = database.subscribe(() => {
+      loadCTFs();
+    });
+    return unsubscribe;
+  }, []);
+
+  const loadCTFs = () => {
+    const loadedCTFs = database.getCTFs();
+    setCTFs(loadedCTFs);
+  };
 
   const categoryIcons = {
     web: Globe,
@@ -120,7 +63,8 @@ const CTFsPage: React.FC = () => {
   const difficultyColors = {
     easy: 'bg-green-100 text-green-800',
     medium: 'bg-yellow-100 text-yellow-800',
-    hard: 'bg-red-100 text-red-800'
+    hard: 'bg-red-100 text-red-800',
+    expert: 'bg-red-200 text-red-900'
   };
 
   const filteredCTFs = ctfs.filter(ctf => {
@@ -134,34 +78,74 @@ const CTFsPage: React.FC = () => {
   });
 
   const handleAddCTF = () => {
-    if (newCTF.title && newCTF.description && newCTF.link) {
-      const ctf: CTF = {
-        id: Date.now().toString(),
+    if (!newCTF.title || !newCTF.description) {
+      toast({
+        title: "Erro",
+        description: "Título e descrição são obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      database.createCTF({
         title: newCTF.title,
         description: newCTF.description,
-        image: newCTF.image || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400',
-        link: newCTF.link,
-        category: newCTF.category as CTF['category'],
         difficulty: newCTF.difficulty as CTF['difficulty'],
-        tags: newCTF.tags || []
-      };
-      
-      setCTFs([...ctfs, ctf]);
+        category: newCTF.category || 'misc',
+        points: newCTF.points || 100,
+        tags: Array.isArray(newCTF.tags) ? newCTF.tags : [],
+        url: newCTF.url,
+        status: 'available',
+        createdBy: 'user-1',
+        hints: []
+      });
+
+      toast({
+        title: "Sucesso!",
+        description: "CTF criado com sucesso!",
+      });
+
       setNewCTF({
         title: '',
         description: '',
-        image: '',
-        link: '',
+        url: '',
         category: 'web',
         difficulty: 'easy',
-        tags: []
+        tags: [],
+        points: 100
       });
       setIsAddDialogOpen(false);
+    } catch (error) {
+      console.error("Erro ao criar CTF:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao criar CTF",
+        variant: "destructive"
+      });
     }
   };
 
   const handleDeleteCTF = (id: string) => {
-    setCTFs(ctfs.filter(ctf => ctf.id !== id));
+    try {
+      database.deleteCTF(id);
+      toast({
+        title: "Sucesso!",
+        description: "CTF excluído com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao excluir CTF:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir CTF",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleTagsChange = (tagsString: string) => {
+    const tags = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag);
+    setNewCTF({ ...newCTF, tags });
   };
 
   return (
@@ -174,7 +158,7 @@ const CTFsPage: React.FC = () => {
             CTFs - Capture The Flag
           </h1>
           <p className="text-muted-foreground mt-2">
-            Plataformas e desafios para prática de segurança cibernética
+            Gerencie seus desafios de segurança cibernética
           </p>
         </div>
         
@@ -182,48 +166,58 @@ const CTFsPage: React.FC = () => {
           <DialogTrigger asChild>
             <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
               <Plus className="h-4 w-4 mr-2" />
-              Adicionar CTF
+              Criar CTF
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Adicionar Novo CTF</DialogTitle>
+              <DialogTitle>Criar Novo CTF</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title">Título</Label>
+                <Label htmlFor="title">Título *</Label>
                 <Input
                   id="title"
                   value={newCTF.title}
                   onChange={(e) => setNewCTF({ ...newCTF, title: e.target.value })}
-                  placeholder="Nome da plataforma CTF"
+                  placeholder="Nome do desafio CTF"
                 />
               </div>
               <div>
-                <Label htmlFor="description">Descrição</Label>
+                <Label htmlFor="description">Descrição *</Label>
                 <Textarea
                   id="description"
                   value={newCTF.description}
                   onChange={(e) => setNewCTF({ ...newCTF, description: e.target.value })}
-                  placeholder="Descrição breve da plataforma"
+                  placeholder="Descrição do desafio"
                 />
               </div>
               <div>
-                <Label htmlFor="link">Link</Label>
+                <Label htmlFor="url">URL (opcional)</Label>
                 <Input
-                  id="link"
-                  value={newCTF.link}
-                  onChange={(e) => setNewCTF({ ...newCTF, link: e.target.value })}
+                  id="url"
+                  value={newCTF.url}
+                  onChange={(e) => setNewCTF({ ...newCTF, url: e.target.value })}
                   placeholder="https://exemplo.com"
                 />
               </div>
               <div>
-                <Label htmlFor="image">URL da Imagem</Label>
+                <Label htmlFor="points">Pontos</Label>
                 <Input
-                  id="image"
-                  value={newCTF.image}
-                  onChange={(e) => setNewCTF({ ...newCTF, image: e.target.value })}
-                  placeholder="URL da imagem (opcional)"
+                  id="points"
+                  type="number"
+                  value={newCTF.points}
+                  onChange={(e) => setNewCTF({ ...newCTF, points: parseInt(e.target.value) || 100 })}
+                  placeholder="100"
+                />
+              </div>
+              <div>
+                <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
+                <Input
+                  id="tags"
+                  value={Array.isArray(newCTF.tags) ? newCTF.tags.join(', ') : ''}
+                  onChange={(e) => handleTagsChange(e.target.value)}
+                  placeholder="web, sql injection, beginner"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -232,7 +226,7 @@ const CTFsPage: React.FC = () => {
                   <select
                     id="category"
                     value={newCTF.category}
-                    onChange={(e) => setNewCTF({ ...newCTF, category: e.target.value as CTF['category'] })}
+                    onChange={(e) => setNewCTF({ ...newCTF, category: e.target.value })}
                     className="w-full p-2 border rounded-md"
                   >
                     <option value="web">Web</option>
@@ -254,11 +248,12 @@ const CTFsPage: React.FC = () => {
                     <option value="easy">Fácil</option>
                     <option value="medium">Médio</option>
                     <option value="hard">Difícil</option>
+                    <option value="expert">Expert</option>
                   </select>
                 </div>
               </div>
               <Button onClick={handleAddCTF} className="w-full">
-                Adicionar CTF
+                Criar CTF
               </Button>
             </div>
           </DialogContent>
@@ -300,6 +295,7 @@ const CTFsPage: React.FC = () => {
           <option value="easy">Fácil</option>
           <option value="medium">Médio</option>
           <option value="hard">Difícil</option>
+          <option value="expert">Expert</option>
         </select>
       </div>
 
@@ -310,40 +306,26 @@ const CTFsPage: React.FC = () => {
           
           return (
             <Card key={ctf.id} className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105 border-0 shadow-lg bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
-              <div className="relative overflow-hidden">
-                <img
-                  src={ctf.image}
-                  alt={ctf.title}
-                  className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute top-3 right-3 flex gap-2">
-                  <Badge className={`${categoryColors[ctf.category]} border`}>
-                    <CategoryIcon className="h-3 w-3 mr-1" />
-                    {ctf.category.toUpperCase()}
-                  </Badge>
-                </div>
-                <div className="absolute top-3 left-3">
-                  <Badge className={difficultyColors[ctf.difficulty]}>
-                    {ctf.difficulty === 'easy' ? 'Fácil' : ctf.difficulty === 'medium' ? 'Médio' : 'Difícil'}
-                  </Badge>
-                </div>
-                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteCTF(ctf.id)}
-                    className="text-white hover:text-red-300 h-8 w-8 p-0"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">
-                  {ctf.title}
-                </CardTitle>
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-lg font-bold text-gray-900 dark:text-white">
+                    {ctf.title}
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <Badge className={`${categoryColors[ctf.category]} border`}>
+                      <CategoryIcon className="h-3 w-3 mr-1" />
+                      {ctf.category.toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className={difficultyColors[ctf.difficulty]}>
+                    {ctf.difficulty === 'easy' ? 'Fácil' : 
+                     ctf.difficulty === 'medium' ? 'Médio' : 
+                     ctf.difficulty === 'hard' ? 'Difícil' : 'Expert'}
+                  </Badge>
+                  <Badge variant="outline">{ctf.points} pts</Badge>
+                </div>
                 <CardDescription className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
                   {ctf.description}
                 </CardDescription>
@@ -363,17 +345,34 @@ const CTFsPage: React.FC = () => {
                   )}
                 </div>
                 
-                <a
-                  href={ctf.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full"
-                >
-                  <Button className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 transition-all duration-300 group">
-                    Acessar
-                    <ExternalLink className="h-4 w-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                <div className="flex gap-2">
+                  {ctf.url ? (
+                    <a
+                      href={ctf.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1"
+                    >
+                      <Button className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 transition-all duration-300 group">
+                        Acessar
+                        <ExternalLink className="h-4 w-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                      </Button>
+                    </a>
+                  ) : (
+                    <Button disabled className="flex-1">
+                      Sem URL
+                    </Button>
+                  )}
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteCTF(ctf.id)}
+                    className="px-3"
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                </a>
+                </div>
               </CardContent>
             </Card>
           );
@@ -384,11 +383,17 @@ const CTFsPage: React.FC = () => {
         <div className="text-center py-12">
           <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-            Nenhum CTF encontrado
+            {ctfs.length === 0 ? "Nenhum CTF criado ainda" : "Nenhum CTF encontrado"}
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Tente ajustar os filtros ou adicionar um novo CTF.
+          <p className="text-sm text-muted-foreground mb-4">
+            {ctfs.length === 0 ? "Crie seu primeiro desafio CTF." : "Tente ajustar os filtros."}
           </p>
+          {ctfs.length === 0 && (
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Criar Primeiro CTF
+            </Button>
+          )}
         </div>
       )}
     </div>

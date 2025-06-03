@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronRight, Folder, File, Plus, Target, Database, ArrowLeft, Image, FolderPlus } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, File, Plus, Target, Database, ArrowRight, Image, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -56,16 +56,6 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange, onFo
     return pages.filter(page => page.folderId === folderId);
   };
 
-  const handleFolderClick = (folderId: string, event: React.MouseEvent) => {
-    // Se clicar com Ctrl/Cmd, navega para a pasta
-    if (event.ctrlKey || event.metaKey) {
-      onFolderSelect(folderId);
-    } else {
-      // Senão, apenas expande/colapsa
-      toggleFolder(folderId);
-    }
-  };
-
   const FolderItem = ({ folder }: { folder: FolderType }) => {
     const folderPages = getFolderPages(folder.id);
     const subFolders = folders.filter(f => f.parentId === folder.id);
@@ -74,16 +64,16 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange, onFo
 
     return (
       <div className="animate-fade-in">
-        <div className="flex items-center">
+        <div className="flex items-center group">
           <Button
             variant="ghost"
-            className={`flex-1 justify-start text-sm font-medium h-9 transition-all duration-500 hover:bg-accent/50 hover:shadow-sm hover:scale-[1.02] group ${
+            className={`flex-1 justify-start text-sm font-medium h-9 transition-all duration-500 hover:bg-accent/50 hover:shadow-sm hover:scale-[1.02] ${
               isExpanded ? 'bg-accent/30 shadow-inner' : ''
             }`}
-            onClick={(e) => handleFolderClick(folder.id, e)}
+            onClick={() => hasChildren && toggleFolder(folder.id)}
           >
             <div className="flex items-center gap-2 flex-1">
-              <div className="transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
+              <div className="transition-all duration-300 group-hover:scale-110">
                 {hasChildren ? (
                   isExpanded ? (
                     <ChevronDown className="h-4 w-4 text-primary" />
@@ -113,18 +103,15 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange, onFo
             </div>
           </Button>
           
-          {/* Botão para navegar para a pasta */}
+          {/* Botão para entrar na pasta */}
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 w-9 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            onClick={(e) => {
-              e.stopPropagation();
-              onFolderSelect(folder.id);
-            }}
+            className="h-9 w-9 p-0 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-primary/10"
+            onClick={() => onFolderSelect(folder.id)}
             title="Entrar na pasta"
           >
-            <ArrowLeft className="h-3 w-3 rotate-180" />
+            <ArrowRight className="h-3 w-3" />
           </Button>
         </div>
         
@@ -295,7 +282,7 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange, onFo
                 onClick={() => onViewChange('ctfs')}
               >
                 <Target className="h-3 w-3 mr-2 text-muted-foreground group-hover:text-primary group-hover:rotate-12 transition-all duration-300" />
-                Ver CTFs Disponíveis
+                Gerenciar CTFs
               </Button>
             </div>
           </div>

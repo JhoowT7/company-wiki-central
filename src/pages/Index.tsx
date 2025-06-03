@@ -79,7 +79,6 @@ const Index = () => {
               pageId={viewMode === 'edit' ? selectedPage! : undefined}
               onSave={handleSavePage}
               onCancel={handleBack}
-              defaultFolderId={currentFolderId}
             />
           </div>
         );
