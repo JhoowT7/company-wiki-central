@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
@@ -10,8 +9,7 @@ import CategoryManager from "@/components/category/CategoryManager";
 import BackupManager from "@/components/backup/BackupManager";
 import FolderManager from "@/components/folder/FolderManager";
 import MediaManager from "@/components/media/MediaManager";
-
-type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs' | 'kanban' | 'table' | 'graph' | 'backup' | 'folders' | 'media';
+import type { ViewMode } from "@/types";
 
 const Index = () => {
   const [selectedPage, setSelectedPage] = useState<string | null>(null);

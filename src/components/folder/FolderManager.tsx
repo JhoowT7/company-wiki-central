@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Plus, Folder, Edit, Trash2, Move, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,9 @@ const FolderManager = () => {
 
     loadFolders();
     const unsubscribe = database.subscribe(loadFolders);
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const createFolder = () => {

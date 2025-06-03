@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Upload, Image as ImageIcon, Video, Music, FileText, Youtube, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,9 @@ const MediaManager = () => {
 
     loadMedia();
     const unsubscribe = database.subscribe(loadMedia);
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {

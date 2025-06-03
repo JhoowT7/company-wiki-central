@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronRight, Folder, File, Plus, Target, Database, ArrowLeft, Image, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,9 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
 
     loadData();
     const unsubscribe = database.subscribe(loadData);
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const toggleFolder = (folderId: string) => {
