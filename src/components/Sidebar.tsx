@@ -6,18 +6,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { database } from "@/stores/database";
-import { Folder as FolderType, Page } from "@/types";
-
-type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs' | 'kanban' | 'table' | 'graph' | 'backup' | 'folders' | 'media';
+import { Folder as FolderType, Page, ViewMode } from "@/types";
 
 interface SidebarProps {
   isOpen: boolean;
   onPageSelect: (pageId: string) => void;
   selectedPage: string | null;
   onViewChange: (view: ViewMode) => void;
+  onFolderSelect: (folderId: string) => void;
 }
 
-export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: SidebarProps) {
+export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange, onFolderSelect }: SidebarProps) {
   const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
   const [folders, setFolders] = useState<FolderType[]>([]);
   const [pages, setPages] = useState<Page[]>([]);
@@ -57,56 +56,90 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
     return pages.filter(page => page.folderId === folderId);
   };
 
+  const handleFolderClick = (folderId: string, event: React.MouseEvent) => {
+    // Se clicar com Ctrl/Cmd, navega para a pasta
+    if (event.ctrlKey || event.metaKey) {
+      onFolderSelect(folderId);
+    } else {
+      // Senão, apenas expande/colapsa
+      toggleFolder(folderId);
+    }
+  };
+
   const FolderItem = ({ folder }: { folder: FolderType }) => {
     const folderPages = getFolderPages(folder.id);
+    const subFolders = folders.filter(f => f.parentId === folder.id);
     const isExpanded = expandedFolders.includes(folder.id);
+    const hasChildren = folderPages.length > 0 || subFolders.length > 0;
 
     return (
       <div className="animate-fade-in">
-        <Button
-          variant="ghost"
-          className={`w-full justify-start text-sm font-medium h-9 transition-all duration-500 hover:bg-accent/50 hover:shadow-sm hover:scale-[1.02] group ${
-            isExpanded ? 'bg-accent/30 shadow-inner' : ''
-          }`}
-          onClick={() => toggleFolder(folder.id)}
-        >
-          <div className="flex items-center gap-2 flex-1">
-            <div className="transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
-              {folderPages.length > 0 ? (
-                isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-primary" />
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            className={`flex-1 justify-start text-sm font-medium h-9 transition-all duration-500 hover:bg-accent/50 hover:shadow-sm hover:scale-[1.02] group ${
+              isExpanded ? 'bg-accent/30 shadow-inner' : ''
+            }`}
+            onClick={(e) => handleFolderClick(folder.id, e)}
+          >
+            <div className="flex items-center gap-2 flex-1">
+              <div className="transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
+                {hasChildren ? (
+                  isExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-primary" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )
                 ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )
-              ) : (
-                <div className="w-4" />
+                  <div className="w-4" />
+                )}
+              </div>
+              
+              <span className="text-lg transition-all duration-300 group-hover:scale-110 filter group-hover:brightness-110" style={{ color: folder.color }}>
+                {folder.icon}
+              </span>
+              <span className="flex-1 text-left truncate group-hover:text-primary transition-colors duration-300">
+                {folder.name}
+              </span>
+              
+              {hasChildren && (
+                <Badge 
+                  variant="secondary" 
+                  className="text-xs ml-auto opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
+                >
+                  {folderPages.length + subFolders.length}
+                </Badge>
               )}
             </div>
-            
-            <span className="text-lg transition-all duration-300 group-hover:scale-110 filter group-hover:brightness-110" style={{ color: folder.color }}>
-              {folder.icon}
-            </span>
-            <span className="flex-1 text-left truncate group-hover:text-primary transition-colors duration-300">
-              {folder.name}
-            </span>
-            
-            {folderPages.length > 0 && (
-              <Badge 
-                variant="secondary" 
-                className="text-xs ml-auto opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
-              >
-                {folderPages.length}
-              </Badge>
-            )}
-          </div>
-        </Button>
+          </Button>
+          
+          {/* Botão para navegar para a pasta */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 w-9 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            onClick={(e) => {
+              e.stopPropagation();
+              onFolderSelect(folder.id);
+            }}
+            title="Entrar na pasta"
+          >
+            <ArrowLeft className="h-3 w-3 rotate-180" />
+          </Button>
+        </div>
         
-        {isExpanded && folderPages.length > 0 && (
-          <div className="animate-accordion-down space-y-1 mt-1 overflow-hidden">
+        {isExpanded && hasChildren && (
+          <div className="animate-accordion-down space-y-1 mt-1 overflow-hidden pl-4">
+            {/* Subpastas */}
+            {subFolders.map((subFolder) => (
+              <FolderItem key={subFolder.id} folder={subFolder} />
+            ))}
+            
+            {/* Páginas */}
             {folderPages.map((page, index) => (
               <div
                 key={page.id}
-                className="group flex items-center gap-2 animate-slide-up pl-8"
+                className="group flex items-center gap-2 animate-slide-up"
                 style={{ 
                   animationDelay: `${index * 0.05}s`
                 }}
@@ -133,6 +166,9 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
       </div>
     );
   };
+
+  // Filtrar apenas pastas raiz (sem parentId)
+  const rootFolders = folders.filter(folder => !folder.parentId);
 
   if (!isOpen) return null;
 
@@ -188,7 +224,7 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
             <div className="animate-slide-up">
               <div className="flex items-center justify-between mb-3 px-1">
                 <h3 className="font-medium text-sm text-muted-foreground">
-                  Pastas ({folders.length})
+                  Pastas ({rootFolders.length})
                 </h3>
                 <Button
                   variant="ghost"
@@ -201,7 +237,7 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
               </div>
               
               <div className="space-y-1">
-                {folders.length === 0 ? (
+                {rootFolders.length === 0 ? (
                   <div className="text-center py-4">
                     <Folder className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">
@@ -212,7 +248,7 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
                     </p>
                   </div>
                 ) : (
-                  folders.map((folder, index) => (
+                  rootFolders.map((folder, index) => (
                     <div 
                       key={folder.id}
                       className="animate-fade-in"
@@ -223,6 +259,15 @@ export function Sidebar({ isOpen, onPageSelect, selectedPage, onViewChange }: Si
                   ))
                 )}
               </div>
+              
+              {/* Dica para navegação */}
+              {rootFolders.length > 0 && (
+                <div className="mt-3 px-1">
+                  <p className="text-xs text-muted-foreground">
+                    💡 Clique na seta → para entrar na pasta
+                  </p>
+                </div>
+              )}
             </div>
 
             <Separator className="opacity-50" />

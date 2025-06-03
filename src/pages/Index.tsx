@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
@@ -8,6 +9,7 @@ import AdminSettings from "@/components/settings/AdminSettings";
 import CategoryManager from "@/components/category/CategoryManager";
 import BackupManager from "@/components/backup/BackupManager";
 import FolderManager from "@/components/folder/FolderManager";
+import FolderNavigator from "@/components/folder/FolderNavigator";
 import MediaManager from "@/components/media/MediaManager";
 import { ViewMode } from "@/types";
 
@@ -15,6 +17,7 @@ const Index = () => {
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
+  const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
 
   const handlePageSelect = (pageId: string) => {
     setSelectedPage(pageId);
@@ -35,10 +38,19 @@ const Index = () => {
   const handleBack = () => {
     setViewMode('dashboard');
     setSelectedPage(null);
+    setCurrentFolderId(undefined);
   };
 
   const handleViewChange = (view: ViewMode) => {
     setViewMode(view);
+    if (view !== 'folder-view') {
+      setCurrentFolderId(undefined);
+    }
+  };
+
+  const handleFolderSelect = (folderId: string) => {
+    setCurrentFolderId(folderId);
+    setViewMode('folder-view');
   };
 
   const renderMainContent = () => {
@@ -67,6 +79,7 @@ const Index = () => {
               pageId={viewMode === 'edit' ? selectedPage! : undefined}
               onSave={handleSavePage}
               onCancel={handleBack}
+              defaultFolderId={currentFolderId}
             />
           </div>
         );
@@ -112,6 +125,18 @@ const Index = () => {
             <FolderManager />
           </div>
         );
+      case 'folder-view':
+        return (
+          <div className="animate-fade-in">
+            <FolderNavigator
+              currentFolderId={currentFolderId}
+              onBack={handleBack}
+              onPageSelect={handlePageSelect}
+              onEditPage={handleEditPage}
+              onFolderSelect={handleFolderSelect}
+            />
+          </div>
+        );
       case 'media':
         return (
           <div className="animate-fade-in">
@@ -124,6 +149,7 @@ const Index = () => {
             <Dashboard 
               onPageSelect={handlePageSelect}
               onNewPage={() => handleEditPage()}
+              onFolderSelect={handleFolderSelect}
             />
           </div>
         );
@@ -155,6 +181,7 @@ const Index = () => {
               onPageSelect={handlePageSelect}
               selectedPage={selectedPage}
               onViewChange={handleViewChange}
+              onFolderSelect={handleFolderSelect}
             />
           </div>
           

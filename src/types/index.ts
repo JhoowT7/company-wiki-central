@@ -1,4 +1,4 @@
-export type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs' | 'kanban' | 'table' | 'graph' | 'backup' | 'folders' | 'media';
+export type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs' | 'kanban' | 'table' | 'graph' | 'backup' | 'folders' | 'media' | 'folder-view';
 
 export interface User {
   id: string;

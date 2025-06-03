@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Plus, FileText, Folder, Search, TrendingUp, Calendar, Users, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,9 +10,10 @@ import { Page, Folder as FolderType } from "@/types";
 interface DashboardProps {
   onPageSelect: (pageId: string) => void;
   onNewPage: () => void;
+  onFolderSelect?: (folderId: string) => void;
 }
 
-export function Dashboard({ onPageSelect, onNewPage }: DashboardProps) {
+export const Dashboard = ({ onPageSelect, onNewPage, onFolderSelect }: DashboardProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [stats, setStats] = useState({
     totalFolders: 0,
@@ -79,8 +79,10 @@ export function Dashboard({ onPageSelect, onNewPage }: DashboardProps) {
     }
   };
 
+  const recentFolders = folders.slice(0, 4);
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -149,6 +151,80 @@ export function Dashboard({ onPageSelect, onNewPage }: DashboardProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group border-2 border-dashed border-primary/20 hover:border-primary/40">
+          <CardContent className="p-6 text-center">
+            <div className="mb-4">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300">
+                <Folder className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+            <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors duration-300">
+              Navegar Pastas
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Explore a estrutura de pastas
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Folders Section */}
+      {recentFolders.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Pastas Recentes</h2>
+            <Button variant="outline" size="sm">
+              Ver Todas
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {recentFolders.map((folder) => {
+              const folderPages = pages.filter(p => p.folderId === folder.id);
+              const subFolders = folders.filter(f => f.parentId === folder.id);
+              
+              return (
+                <Card 
+                  key={folder.id} 
+                  className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                  onClick={() => onFolderSelect?.(folder.id)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        <span 
+                          style={{ color: folder.color }} 
+                          className="text-2xl group-hover:scale-110 transition-transform duration-300"
+                        >
+                          {folder.icon}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium truncate group-hover:text-primary transition-colors duration-300">
+                          {folder.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {folder.path}
+                        </p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {subFolders.length} pastas
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {folderPages.length} páginas
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">
@@ -271,4 +347,4 @@ export function Dashboard({ onPageSelect, onNewPage }: DashboardProps) {
       </div>
     </div>
   );
-}
+};
