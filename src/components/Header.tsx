@@ -13,8 +13,7 @@ import {
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
 import { getCurrentUser, removeAuthToken } from "@/utils/auth";
-
-type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories';
+import { ViewMode } from "@/types";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
