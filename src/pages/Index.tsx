@@ -11,7 +11,8 @@ import BackupManager from "@/components/backup/BackupManager";
 import FolderManager from "@/components/folder/FolderManager";
 import FolderNavigator from "@/components/folder/FolderNavigator";
 import MediaManager from "@/components/media/MediaManager";
-import { ViewMode } from "@/types";
+
+type ViewMode = 'dashboard' | 'page' | 'edit' | 'new' | 'settings' | 'categories' | 'ctfs' | 'kanban' | 'table' | 'graph' | 'backup' | 'folders' | 'media' | 'folder-view';
 
 const Index = () => {
   const [selectedPage, setSelectedPage] = useState<string | null>(null);
