@@ -27,6 +27,14 @@ export interface Page {
   updatedAt: string;
   tags: string[];
   category: string;
+  status?: 'published' | 'draft' | 'review' | 'archived';
+  priority?: 'low' | 'medium' | 'high';
+  excerpt?: string;
+  metadata?: {
+    createdAt: string;
+    updatedAt: string;
+    author: string;
+  };
 }
 
 export interface Folder {
@@ -40,17 +48,28 @@ export interface Folder {
   password?: string;
   isPublic?: boolean;
   createdAt: string;
+  icon?: string;
+  color?: string;
+  path?: string;
+  description?: string;
+  permissions?: {
+    read: string[];
+    write: string[];
+    delete: string[];
+  };
+  order?: number;
 }
 
 export interface MediaFile {
   id: string;
   name: string;
-  type: 'image' | 'video' | 'audio' | 'document';
+  type: 'image' | 'video' | 'audio' | 'document' | 'youtube';
   url: string;
   size: number;
   folderId?: string;
   uploadedBy: string;
   uploadedAt: string;
+  thumbnailUrl?: string;
 }
 
 export interface User {
@@ -58,4 +77,34 @@ export interface User {
   name: string;
   email: string;
   role: 'admin' | 'user';
+}
+
+export interface CTF {
+  id: string;
+  name: string;
+  description: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category: string;
+  points: number;
+  solved: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  color: string;
+  icon: string;
+  createdAt: string;
+}
+
+export interface Backup {
+  id: string;
+  name: string;
+  description?: string;
+  size: number;
+  createdAt: string;
+  type: 'full' | 'partial';
 }

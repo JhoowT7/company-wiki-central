@@ -1,4 +1,5 @@
-import { Folder, MediaFile, Page } from "@/types";
+
+import { Folder, MediaFile, Page, CTF, Category, Backup } from "@/types";
 
 // Mock data
 const initialFolders: Folder[] = [
@@ -11,6 +12,12 @@ const initialFolders: Folder[] = [
     files: [],
     isPublic: true,
     hasPassword: false,
+    icon: '📁',
+    color: '#3B82F6',
+    path: '/documentos',
+    description: 'Pasta para documentos gerais',
+    permissions: { read: ['*'], write: ['admin'], delete: ['admin'] },
+    order: 1,
   },
   {
     id: 'folder-2',
@@ -21,6 +28,12 @@ const initialFolders: Folder[] = [
     files: [],
     isPublic: true,
     hasPassword: false,
+    icon: '🖼️',
+    color: '#10B981',
+    path: '/imagens',
+    description: 'Pasta para imagens e fotos',
+    permissions: { read: ['*'], write: ['admin'], delete: ['admin'] },
+    order: 2,
   },
   {
     id: 'folder-3',
@@ -31,6 +44,12 @@ const initialFolders: Folder[] = [
     files: [],
     isPublic: true,
     hasPassword: false,
+    icon: '🎥',
+    color: '#F59E0B',
+    path: '/videos',
+    description: 'Pasta para vídeos',
+    permissions: { read: ['*'], write: ['admin'], delete: ['admin'] },
+    order: 3,
   },
   {
     id: 'folder-4',
@@ -41,6 +60,12 @@ const initialFolders: Folder[] = [
     files: [],
     isPublic: true,
     hasPassword: false,
+    icon: '🚀',
+    color: '#EF4444',
+    path: '/projetos',
+    description: 'Pasta para projetos',
+    permissions: { read: ['*'], write: ['admin'], delete: ['admin'] },
+    order: 4,
   },
   {
     id: 'folder-5',
@@ -51,6 +76,12 @@ const initialFolders: Folder[] = [
     files: [],
     isPublic: true,
     hasPassword: false,
+    icon: '📈',
+    color: '#8B5CF6',
+    path: '/marketing',
+    description: 'Pasta para materiais de marketing',
+    permissions: { read: ['*'], write: ['admin'], delete: ['admin'] },
+    order: 5,
   }
 ];
 
@@ -93,6 +124,8 @@ const initialMediaFiles: MediaFile[] = [
   }
 ];
 
+type Subscriber = () => void;
+
 class Database {
   private pages: Page[] = [
     {
@@ -106,11 +139,48 @@ class Database {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       tags: [],
-      category: 'Principal'
+      category: 'Principal',
+      status: 'published',
+      priority: 'high',
+      metadata: {
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        author: 'Admin'
+      }
     }
   ];
   private folders: Folder[] = initialFolders;
   private mediaFiles: MediaFile[] = initialMediaFiles;
+  private ctfs: CTF[] = [];
+  private categories: Category[] = [];
+  private backups: Backup[] = [];
+  private subscribers: Subscriber[] = [];
+
+  // Subscription system
+  subscribe(callback: Subscriber): () => void {
+    this.subscribers.push(callback);
+    return () => {
+      this.subscribers = this.subscribers.filter(sub => sub !== callback);
+    };
+  }
+
+  private notifySubscribers() {
+    this.subscribers.forEach(callback => callback());
+  }
+
+  // Stats method
+  getStats() {
+    return {
+      totalPages: this.pages.length,
+      totalFolders: this.folders.length,
+      totalCTFs: this.ctfs.length,
+      totalBackups: this.backups.length,
+      totalMediaFiles: this.mediaFiles.length,
+      totalCategories: this.categories.length,
+      recentPages: this.pages.slice(-5).reverse(),
+      popularPages: this.pages.filter(p => p.priority === 'high')
+    };
+  }
 
   // Page methods
   createPage(page: Omit<Page, 'id' | 'createdAt' | 'updatedAt'>): Page {
@@ -118,9 +188,17 @@ class Database {
       ...page,
       id: `page-${Date.now()}-${Math.random()}`,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      status: page.status || 'published',
+      priority: page.priority || 'medium',
+      metadata: {
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        author: page.author
+      }
     };
     this.pages.push(newPage);
+    this.notifySubscribers();
     return newPage;
   }
 
@@ -148,6 +226,7 @@ class Database {
         ...updates,
         updatedAt: new Date().toISOString()
       };
+      this.notifySubscribers();
       return this.pages[index];
     }
     return null;
@@ -157,6 +236,7 @@ class Database {
     const index = this.pages.findIndex(page => page.id === id);
     if (index !== -1) {
       this.pages.splice(index, 1);
+      this.notifySubscribers();
       return true;
     }
     return false;
@@ -182,6 +262,7 @@ class Database {
         ...this.folders[index],
         ...updates
       };
+      this.notifySubscribers();
       return this.folders[index];
     }
     return null;
@@ -191,6 +272,7 @@ class Database {
     const index = this.folders.findIndex(folder => folder.id === id);
     if (index !== -1) {
       this.folders.splice(index, 1);
+      this.notifySubscribers();
       return true;
     }
     return false;
@@ -203,6 +285,7 @@ class Database {
       id: `file-${Date.now()}-${Math.random()}`
     };
     this.mediaFiles.push(newFile);
+    this.notifySubscribers();
     return newFile;
   }
 
@@ -218,6 +301,7 @@ class Database {
     const index = this.mediaFiles.findIndex(file => file.id === id);
     if (index !== -1) {
       this.mediaFiles.splice(index, 1);
+      this.notifySubscribers();
       return true;
     }
     return false;
@@ -234,6 +318,7 @@ class Database {
       files: []
     };
     this.folders.push(newFolder);
+    this.notifySubscribers();
     return newFolder;
   }
 
@@ -251,6 +336,122 @@ class Database {
     if (!page) return false;
     if (!page.hasPassword) return true;
     return page.password === password;
+  }
+
+  // CTF methods
+  getCTFs(): CTF[] {
+    return this.ctfs;
+  }
+
+  createCTF(ctf: Omit<CTF, 'id' | 'createdAt' | 'updatedAt'>): CTF {
+    const newCTF: CTF = {
+      ...ctf,
+      id: `ctf-${Date.now()}-${Math.random()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    this.ctfs.push(newCTF);
+    this.notifySubscribers();
+    return newCTF;
+  }
+
+  deleteCTF(id: string): boolean {
+    const index = this.ctfs.findIndex(ctf => ctf.id === id);
+    if (index !== -1) {
+      this.ctfs.splice(index, 1);
+      this.notifySubscribers();
+      return true;
+    }
+    return false;
+  }
+
+  // Category methods
+  getCategories(): Category[] {
+    return this.categories;
+  }
+
+  createCategory(category: Omit<Category, 'id' | 'createdAt'>): Category {
+    const newCategory: Category = {
+      ...category,
+      id: `category-${Date.now()}-${Math.random()}`,
+      createdAt: new Date().toISOString()
+    };
+    this.categories.push(newCategory);
+    this.notifySubscribers();
+    return newCategory;
+  }
+
+  updateCategory(id: string, updates: Partial<Category>): Category | null {
+    const index = this.categories.findIndex(category => category.id === id);
+    if (index !== -1) {
+      this.categories[index] = {
+        ...this.categories[index],
+        ...updates
+      };
+      this.notifySubscribers();
+      return this.categories[index];
+    }
+    return null;
+  }
+
+  deleteCategory(id: string): boolean {
+    const index = this.categories.findIndex(category => category.id === id);
+    if (index !== -1) {
+      this.categories.splice(index, 1);
+      this.notifySubscribers();
+      return true;
+    }
+    return false;
+  }
+
+  // Backup methods
+  getBackups(): Backup[] {
+    return this.backups;
+  }
+
+  createBackup(backup: Omit<Backup, 'id' | 'createdAt'>): Backup {
+    const newBackup: Backup = {
+      ...backup,
+      id: `backup-${Date.now()}-${Math.random()}`,
+      createdAt: new Date().toISOString()
+    };
+    this.backups.push(newBackup);
+    this.notifySubscribers();
+    return newBackup;
+  }
+
+  exportBackup(id: string): any {
+    return {
+      pages: this.pages,
+      folders: this.folders,
+      mediaFiles: this.mediaFiles,
+      ctfs: this.ctfs,
+      categories: this.categories
+    };
+  }
+
+  restoreBackup(data: any): boolean {
+    try {
+      this.pages = data.pages || [];
+      this.folders = data.folders || [];
+      this.mediaFiles = data.mediaFiles || [];
+      this.ctfs = data.ctfs || [];
+      this.categories = data.categories || [];
+      this.notifySubscribers();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  deleteBackup(id: string): boolean {
+    const index = this.backups.findIndex(backup => backup.id === id);
+    if (index !== -1) {
+      this.backups.splice(index, 1);
+      this.notifySubscribers();
+      return true;
+    }
+    return false;
   }
 }
 
