@@ -82,6 +82,7 @@ export interface User {
 export interface CTF {
   id: string;
   name: string;
+  title: string;
   description: string;
   difficulty: 'easy' | 'medium' | 'hard';
   category: string;
@@ -89,6 +90,8 @@ export interface CTF {
   solved: boolean;
   createdAt: string;
   updatedAt: string;
+  tags: string[];
+  url: string;
 }
 
 export interface Category {
@@ -98,6 +101,7 @@ export interface Category {
   color: string;
   icon: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Backup {
@@ -106,5 +110,5 @@ export interface Backup {
   description?: string;
   size: number;
   createdAt: string;
-  type: 'full' | 'partial';
+  type: 'full' | 'partial' | 'manual';
 }

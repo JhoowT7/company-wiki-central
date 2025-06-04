@@ -1,4 +1,3 @@
-
 import { Folder, MediaFile, Page, CTF, Category, Backup } from "@/types";
 
 // Mock data
@@ -370,11 +369,12 @@ class Database {
     return this.categories;
   }
 
-  createCategory(category: Omit<Category, 'id' | 'createdAt'>): Category {
+  createCategory(category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Category {
     const newCategory: Category = {
       ...category,
       id: `category-${Date.now()}-${Math.random()}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
     this.categories.push(newCategory);
     this.notifySubscribers();

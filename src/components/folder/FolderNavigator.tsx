@@ -59,16 +59,9 @@ const FolderNavigator = ({
     const allPages = database.getPages();
     const allFiles = database.getMediaFiles();
     
-    // Filtrar subpastas da pasta atual
     const subFolders = allFolders.filter(folder => folder.parentId === currentFolderId);
-    
-    // Filtrar páginas da pasta atual
     const folderPages = allPages.filter(page => page.folderId === currentFolderId);
-    
-    // Filtrar arquivos da pasta atual
     const folderFiles = allFiles.filter(file => file.folderId === currentFolderId);
-    
-    // Encontrar pasta atual
     const current = currentFolderId ? allFolders.find(f => f.id === currentFolderId) : null;
     
     setFolders(subFolders);
@@ -139,6 +132,9 @@ const FolderNavigator = ({
         title: newPage.title,
         content: newPage.content,
         folderId: currentFolderId,
+        author: 'Usuário Atual',
+        tags: [],
+        category: 'Geral',
         status: 'draft',
         priority: 'medium'
       });

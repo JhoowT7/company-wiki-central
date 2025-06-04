@@ -1,43 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Edit, Calendar, User, Tag, Share, Heart, Bookmark, MoreVertical, Eye, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, User, Tag, Share, Heart, Bookmark, Eye, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { database } from '@/stores/database';
+import { Page } from '@/types';
 
 interface EnhancedPageViewProps {
   pageId: string;
   onBack: () => void;
   onEdit: () => void;
-}
-
-interface PageData {
-  id: string;
-  title: string;
-  content: string;
-  author: string;
-  lastModified: string;
-  status: 'published' | 'draft' | 'archived';
-  tags: string[];
-  category: string;
-  views: number;
-  likes: number;
-  isLiked: boolean;
-  isBookmarked: boolean;
-  responsible: string;
-  createdDate: string;
-  version: string;
-  metadata: {
-    responsible: string;
-    updatedAt: string;
-    status: string;
-    version: string;
-    category: string;
-  };
 }
 
 interface Comment {
@@ -49,149 +25,30 @@ interface Comment {
 }
 
 const EnhancedPageView: React.FC<EnhancedPageViewProps> = ({ pageId, onBack, onEdit }) => {
-  const [pageData, setPageData] = useState<PageData | null>(null);
+  const [pageData, setPageData] = useState<Page | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [readingMode, setReadingMode] = useState<'normal' | 'dark' | 'sepia'>('normal');
+  const [likes, setLikes] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
-  // Mock data
   useEffect(() => {
-    const mockData: PageData = {
-      id: pageId,
-      title: "Políticas de Segurança da Informação",
-      content: `
-        <div class="space-y-6">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Introdução</h2>
-          <p class="text-gray-700 dark:text-gray-300">Este documento estabelece as diretrizes fundamentais para a proteção da informação na empresa, garantindo a confidencialidade, integridade e disponibilidade dos dados.</p>
-          
-          <figure class="my-6">
-            <img src="https://images.unsplash.com/photo-1555421689-491a97ff2040?w=800" alt="Segurança Digital" class="rounded-xl shadow-lg w-full" />
-            <figcaption class="text-center text-sm text-gray-500 mt-2">Representação visual da segurança digital empresarial</figcaption>
-          </figure>
-          
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Políticas de Senhas</h2>
-          <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-l-4 border-blue-500">
-            <h3 class="font-semibold text-blue-900 dark:text-blue-200">Requisitos Obrigatórios</h3>
-            <ul class="mt-2 space-y-1 text-blue-800 dark:text-blue-300">
-              <li>• Mínimo de 12 caracteres</li>
-              <li>• Incluir maiúsculas, minúsculas, números e símbolos</li>
-              <li>• Não reutilizar senhas anteriores</li>
-              <li>• Alteração obrigatória a cada 90 dias</li>
-            </ul>
-          </div>
-          
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Acesso a Sistemas</h2>
-          <p class="text-gray-700 dark:text-gray-300">Todos os colaboradores devem seguir as seguintes diretrizes:</p>
-          <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
-            <li>Autenticação em dois fatores obrigatória</li>
-            <li>Logout automático após 30 minutos de inatividade</li>
-            <li>Acesso via VPN para sistemas críticos</li>
-          </ul>
-          
-          <div class="bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 p-6 rounded-xl">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Portal de Acesso Rápido</h3>
-            <p class="text-gray-700 dark:text-gray-300 mb-4">Acesse o portal interno da empresa para mais informações sobre segurança.</p>
-            <a href="https://exemplo.com/portal" target="_blank" rel="noopener noreferrer">
-              <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
-                Acessar Portal Interno
-              </button>
-            </a>
-          </div>
-          
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Vídeo Explicativo</h2>
-          <div class="rounded-xl overflow-hidden shadow-lg">
-            <iframe
-              width="100%"
-              height="400"
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-              frameborder="0"
-              allowfullscreen
-              class="w-full"
-            ></iframe>
-          </div>
-          
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Backup e Recuperação</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border">
-              <h4 class="font-semibold text-gray-900 dark:text-white">Backup Diário</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Automatizado às 02:00</p>
-            </div>
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border">
-              <h4 class="font-semibold text-gray-900 dark:text-white">Testes de Restauração</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Mensais - primeira segunda-feira</p>
-            </div>
-          </div>
-        </div>
-      `,
-      author: "João Silva",
-      lastModified: "2024-01-22T10:30:00Z",
-      status: 'published',
-      tags: ["Segurança", "TI", "Políticas", "Compliance"],
-      category: "Tecnologia da Informação > Segurança",
-      views: 245,
-      likes: 12,
-      isLiked: false,
-      isBookmarked: false,
-      responsible: "João Silva - TI",
-      createdDate: "2024-01-15",
-      version: "v2.1",
-      metadata: {
-        responsible: "João Silva - TI",
-        updatedAt: "22/01/2024",
-        status: "Publicado",
-        version: "v2.1",
-        category: "TI > Segurança"
-      }
-    };
-
-    setPageData(mockData);
-    
-    const mockComments: Comment[] = [
-      {
-        id: '1',
-        author: 'Maria Santos',
-        content: 'Excelente documentação! Muito clara e objetiva.',
-        timestamp: '2024-01-20T14:30:00Z',
-        replies: [
-          {
-            id: '1-1',
-            author: 'João Silva',
-            content: 'Obrigado pelo feedback, Maria!',
-            timestamp: '2024-01-20T15:00:00Z',
-            replies: []
-          }
-        ]
-      },
-      {
-        id: '2',
-        author: 'Pedro Costa',
-        content: 'Seria possível adicionar exemplos práticos de senhas seguras?',
-        timestamp: '2024-01-21T09:15:00Z',
-        replies: []
-      }
-    ];
-    
-    setComments(mockComments);
+    const pages = database.getPages();
+    const page = pages.find(p => p.id === pageId);
+    if (page) {
+      setPageData(page);
+    }
   }, [pageId]);
 
   const handleLike = () => {
-    if (pageData) {
-      setPageData({
-        ...pageData,
-        isLiked: !pageData.isLiked,
-        likes: pageData.isLiked ? pageData.likes - 1 : pageData.likes + 1
-      });
-    }
+    setIsLiked(!isLiked);
+    setLikes(isLiked ? likes - 1 : likes + 1);
   };
 
   const handleBookmark = () => {
-    if (pageData) {
-      setPageData({
-        ...pageData,
-        isBookmarked: !pageData.isBookmarked
-      });
-    }
+    setIsBookmarked(!isBookmarked);
   };
 
   const handleAddComment = () => {
@@ -269,12 +126,11 @@ const EnhancedPageView: React.FC<EnhancedPageViewProps> = ({ pageId, onBack, onE
             </Button>
             <div className="flex items-center gap-2">
               <Eye className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{pageData.views} visualizações</span>
+              <span className="text-sm text-muted-foreground">0 visualizações</span>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Reading Mode Toggle */}
             <select
               value={readingMode}
               onChange={(e) => setReadingMode(e.target.value as any)}
@@ -289,19 +145,19 @@ const EnhancedPageView: React.FC<EnhancedPageViewProps> = ({ pageId, onBack, onE
               variant="ghost"
               size="sm"
               onClick={handleLike}
-              className={pageData.isLiked ? 'text-red-500' : ''}
+              className={isLiked ? 'text-red-500' : ''}
             >
-              <Heart className={`h-4 w-4 mr-1 ${pageData.isLiked ? 'fill-current' : ''}`} />
-              {pageData.likes}
+              <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-current' : ''}`} />
+              {likes}
             </Button>
             
             <Button
               variant="ghost"
               size="sm"
               onClick={handleBookmark}
-              className={pageData.isBookmarked ? 'text-blue-500' : ''}
+              className={isBookmarked ? 'text-blue-500' : ''}
             >
-              <Bookmark className={`h-4 w-4 ${pageData.isBookmarked ? 'fill-current' : ''}`} />
+              <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
             </Button>
             
             <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
@@ -344,17 +200,14 @@ const EnhancedPageView: React.FC<EnhancedPageViewProps> = ({ pageId, onBack, onE
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <User className="h-3 w-3" />
-                    {pageData.metadata.responsible}
+                    {pageData.author}
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    Atualizado em {pageData.metadata.updatedAt}
+                    Atualizado em {new Date(pageData.updatedAt).toLocaleDateString('pt-BR')}
                   </div>
                   <Badge variant={pageData.status === 'published' ? 'default' : 'secondary'}>
-                    {pageData.metadata.status}
-                  </Badge>
-                  <Badge variant="outline">
-                    {pageData.metadata.version}
+                    {pageData.status === 'published' ? 'Publicado' : 'Rascunho'}
                   </Badge>
                 </div>
               </div>
@@ -364,7 +217,7 @@ const EnhancedPageView: React.FC<EnhancedPageViewProps> = ({ pageId, onBack, onE
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Tag className="h-3 w-3" />
               <span className="font-medium">Categoria:</span>
-              <span>{pageData.metadata.category}</span>
+              <span>{pageData.category}</span>
             </div>
           </CardContent>
         </Card>
@@ -398,7 +251,6 @@ const EnhancedPageView: React.FC<EnhancedPageViewProps> = ({ pageId, onBack, onE
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Add Comment */}
             <div className="space-y-2">
               <Textarea
                 placeholder="Adicione um comentário..."
@@ -411,9 +263,6 @@ const EnhancedPageView: React.FC<EnhancedPageViewProps> = ({ pageId, onBack, onE
               </Button>
             </div>
             
-            <Separator />
-            
-            {/* Comments List */}
             <div className="space-y-4">
               {comments.map((comment) => (
                 <div key={comment.id} className="space-y-2">
@@ -429,28 +278,6 @@ const EnhancedPageView: React.FC<EnhancedPageViewProps> = ({ pageId, onBack, onE
                         </span>
                       </div>
                       <p className="text-sm">{comment.content}</p>
-                      
-                      {/* Replies */}
-                      {comment.replies.length > 0 && (
-                        <div className="ml-6 mt-3 space-y-2 border-l-2 border-muted pl-4">
-                          {comment.replies.map((reply) => (
-                            <div key={reply.id} className="flex items-start gap-3">
-                              <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-muted-foreground text-xs font-medium">
-                                {reply.author.charAt(0)}
-                              </div>
-                              <div className="flex-1 space-y-1">
-                                <div className="flex items-center gap-2 text-xs">
-                                  <span className="font-medium">{reply.author}</span>
-                                  <span className="text-muted-foreground">
-                                    {new Date(reply.timestamp).toLocaleDateString('pt-BR')}
-                                  </span>
-                                </div>
-                                <p className="text-xs">{reply.content}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
