@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Upload, File, X, Download, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,20 +48,19 @@ const FileUploader = ({ folderId, onFileUploaded }: FileUploaderProps) => {
     Array.from(files).forEach(file => {
       // Simular upload (em um app real, você faria upload para servidor)
       const fileData = {
-        id: `file-${Date.now()}-${Math.random()}`,
         name: file.name,
         type: getFileType(file.name),
         size: file.size,
         url: URL.createObjectURL(file), // Temporário para demo
         folderId: folderId,
         uploadedBy: 'user-1',
-        uploadedAt: new Date()
+        uploadedAt: new Date().toISOString()
       };
 
       // Salvar no banco de dados
       database.createMediaFile(fileData);
       
-      setUploadedFiles(prev => [...prev, fileData]);
+      setUploadedFiles(prev => [...prev, { ...fileData, id: `file-${Date.now()}-${Math.random()}` }]);
       
       if (onFileUploaded) {
         onFileUploaded(fileData);

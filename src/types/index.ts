@@ -65,7 +65,7 @@ export interface MediaFile {
   name: string;
   type: 'image' | 'video' | 'audio' | 'document' | 'youtube';
   url: string;
-  size: number;
+  size?: number;
   folderId?: string;
   uploadedBy: string;
   uploadedAt: string;

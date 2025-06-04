@@ -44,7 +44,8 @@ const MediaManager = () => {
           url,
           type,
           size: file.size,
-          uploadedBy: 'user-1'
+          uploadedBy: 'user-1',
+          uploadedAt: new Date().toISOString()
         });
 
         toast({
@@ -92,8 +93,10 @@ const MediaManager = () => {
         name: `YouTube Video - ${videoId}`,
         url: youtubeUrl,
         type: 'youtube',
+        size: 0,
         thumbnailUrl,
-        uploadedBy: 'user-1'
+        uploadedBy: 'user-1',
+        uploadedAt: new Date().toISOString()
       });
 
       toast({

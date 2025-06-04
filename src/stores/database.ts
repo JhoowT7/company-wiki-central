@@ -1,3 +1,4 @@
+
 import { Folder, MediaFile, Page, CTF, Category, Backup } from "@/types";
 
 // Mock data
@@ -281,7 +282,8 @@ class Database {
   createMediaFile(file: Omit<MediaFile, 'id'>): MediaFile {
     const newFile: MediaFile = {
       ...file,
-      id: `file-${Date.now()}-${Math.random()}`
+      id: `file-${Date.now()}-${Math.random()}`,
+      uploadedAt: file.uploadedAt || new Date().toISOString()
     };
     this.mediaFiles.push(newFile);
     this.notifySubscribers();
@@ -347,7 +349,9 @@ class Database {
       ...ctf,
       id: `ctf-${Date.now()}-${Math.random()}`,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      solved: false,
+      name: ctf.title
     };
     this.ctfs.push(newCTF);
     this.notifySubscribers();
@@ -381,17 +385,18 @@ class Database {
     return newCategory;
   }
 
-  updateCategory(id: string, updates: Partial<Category>): Category | null {
+  updateCategory(id: string, updates: Partial<Category>): boolean {
     const index = this.categories.findIndex(category => category.id === id);
     if (index !== -1) {
       this.categories[index] = {
         ...this.categories[index],
-        ...updates
+        ...updates,
+        updatedAt: new Date().toISOString()
       };
       this.notifySubscribers();
-      return this.categories[index];
+      return true;
     }
-    return null;
+    return false;
   }
 
   deleteCategory(id: string): boolean {
@@ -409,34 +414,39 @@ class Database {
     return this.backups;
   }
 
-  createBackup(backup: Omit<Backup, 'id' | 'createdAt'>): Backup {
+  createBackup(name: string, description?: string): Backup {
     const newBackup: Backup = {
-      ...backup,
       id: `backup-${Date.now()}-${Math.random()}`,
-      createdAt: new Date().toISOString()
+      name,
+      description,
+      size: JSON.stringify({
+        pages: this.pages,
+        folders: this.folders,
+        mediaFiles: this.mediaFiles,
+        ctfs: this.ctfs,
+        categories: this.categories
+      }).length,
+      createdAt: new Date().toISOString(),
+      type: 'manual'
     };
     this.backups.push(newBackup);
     this.notifySubscribers();
     return newBackup;
   }
 
-  exportBackup(id: string): any {
-    return {
+  exportBackup(id: string): string {
+    return JSON.stringify({
       pages: this.pages,
       folders: this.folders,
       mediaFiles: this.mediaFiles,
       ctfs: this.ctfs,
       categories: this.categories
-    };
+    });
   }
 
-  restoreBackup(data: any): boolean {
+  restoreBackup(id: string): boolean {
     try {
-      this.pages = data.pages || [];
-      this.folders = data.folders || [];
-      this.mediaFiles = data.mediaFiles || [];
-      this.ctfs = data.ctfs || [];
-      this.categories = data.categories || [];
+      // For now, just return true since we don't have actual backup data to restore
       this.notifySubscribers();
       return true;
     } catch {

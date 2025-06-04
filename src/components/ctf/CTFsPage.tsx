@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, ExternalLink, Edit, Trash2, Target, Globe, Shield, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -95,10 +94,7 @@ const CTFsPage: React.FC = () => {
         category: newCTF.category || 'misc',
         points: newCTF.points || 100,
         tags: Array.isArray(newCTF.tags) ? newCTF.tags : [],
-        url: newCTF.url,
-        status: 'available',
-        createdBy: 'user-1',
-        hints: []
+        url: newCTF.url || ''
       });
 
       toast({
