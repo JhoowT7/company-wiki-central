@@ -88,11 +88,13 @@ const CTFsPage: React.FC = () => {
 
     try {
       database.createCTF({
+        name: newCTF.title,
         title: newCTF.title,
         description: newCTF.description,
         difficulty: newCTF.difficulty as CTF['difficulty'],
         category: newCTF.category || 'misc',
         points: newCTF.points || 100,
+        solved: false,
         tags: Array.isArray(newCTF.tags) ? newCTF.tags : [],
         url: newCTF.url || ''
       });

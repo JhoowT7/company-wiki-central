@@ -10,16 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { database } from "@/stores/database";
 import { useToast } from "@/hooks/use-toast";
-
-interface Category {
-  id: string;
-  name: string;
-  description?: string;
-  color?: string;
-  icon?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { Category } from "@/types";
 
 const CategoryManager = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -313,6 +304,111 @@ const CategoryManager = () => {
       </div>
     </div>
   );
+
+  function createCategory() {
+    if (!newCategory.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da categoria é obrigatório",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      database.createCategory(newCategory);
+      
+      toast({
+        title: "Sucesso",
+        description: "Categoria criada com sucesso!",
+      });
+
+      setNewCategory({ name: '', description: '', color: '#3b82f6', icon: '📝' });
+      setIsCreateDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao criar categoria",
+        variant: "destructive"
+      });
+    }
+  }
+
+  function updateCategory() {
+    if (!editingCategory || !newCategory.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da categoria é obrigatório",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const success = database.updateCategory(editingCategory.id, newCategory);
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Categoria atualizada com sucesso!",
+        });
+        setEditingCategory(null);
+        setNewCategory({ name: '', description: '', color: '#3b82f6', icon: '📝' });
+      } else {
+        toast({
+          title: "Erro",
+          description: "Categoria não encontrada",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar categoria",
+        variant: "destructive"
+      });
+    }
+  }
+
+  function deleteCategory(id: string) {
+    try {
+      const success = database.deleteCategory(id);
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Categoria excluída com sucesso!",
+        });
+      } else {
+        toast({
+          title: "Erro",
+          description: "Categoria não encontrada",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir categoria",
+        variant: "destructive"
+      });
+    }
+  }
+
+  function startEdit(category: Category) {
+    setEditingCategory(category);
+    setNewCategory({
+      name: category.name,
+      description: category.description || '',
+      color: category.color || '#3b82f6',
+      icon: category.icon || '📝'
+    });
+    setIsCreateDialogOpen(true);
+  }
+
+  function resetForm() {
+    setEditingCategory(null);
+    setNewCategory({ name: '', description: '', color: '#3b82f6', icon: '📝' });
+    setIsCreateDialogOpen(false);
+  }
 };
 
 export default CategoryManager;
