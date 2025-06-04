@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
@@ -31,12 +30,18 @@ const Index = () => {
 
   const handleSavePage = (content: any) => {
     console.log("Página salva:", content);
-    setViewMode('dashboard');
-    setSelectedPage(null);
+    setViewMode(viewMode === 'new' ? 'dashboard' : 'page');
+    if (content.id) {
+      setSelectedPage(content.id);
+    }
   };
 
   const handleBack = () => {
-    setViewMode('dashboard');
+    if (viewMode === 'page' || viewMode === 'edit') {
+      setViewMode('dashboard');
+    } else {
+      setViewMode('dashboard');
+    }
     setSelectedPage(null);
     setCurrentFolderId(undefined);
   };
@@ -46,6 +51,9 @@ const Index = () => {
     if (view !== 'folder-view') {
       setCurrentFolderId(undefined);
     }
+    if (view === 'main-page') {
+      setSelectedPage(null);
+    }
   };
 
   const handleFolderSelect = (folderId: string) => {
@@ -53,8 +61,28 @@ const Index = () => {
     setViewMode('folder-view');
   };
 
+  const handleCreateMainPage = () => {
+    setSelectedPage(null);
+    setViewMode('new');
+  };
+
   const renderMainContent = () => {
     switch (viewMode) {
+      case 'main-page':
+        const MainPageView = React.lazy(() => import('@/components/page/MainPageView'));
+        return (
+          <React.Suspense fallback={
+            <div className="p-6 flex items-center justify-center min-h-[400px]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-3 text-muted-foreground">Carregando página principal...</span>
+            </div>
+          }>
+            <MainPageView 
+              onEdit={handleCreateMainPage}
+              isAdmin={true}
+            />
+          </React.Suspense>
+        );
       case 'page':
         const EnhancedPageView = React.lazy(() => import('@/components/page/EnhancedPageView'));
         return (
@@ -73,14 +101,26 @@ const Index = () => {
         );
       case 'edit':
       case 'new':
+        const EnhancedPageEditor = React.lazy(() => import('@/components/editor/EnhancedPageEditor'));
         return (
-          <div className="animate-fade-in">
-            <PageEditor
+          <React.Suspense fallback={
+            <div className="p-6 flex items-center justify-center min-h-[400px]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-3 text-muted-foreground">Carregando editor...</span>
+            </div>
+          }>
+            <EnhancedPageEditor
               pageId={viewMode === 'edit' ? selectedPage! : undefined}
+              folderId={currentFolderId}
+              isMainPage={viewMode === 'new' && selectedPage === null}
               onSave={handleSavePage}
               onCancel={handleBack}
+              onPageCreated={(pageId) => {
+                setSelectedPage(pageId);
+                setViewMode('page');
+              }}
             />
-          </div>
+          </React.Suspense>
         );
       case 'settings':
         return (

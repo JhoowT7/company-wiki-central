@@ -1,409 +1,257 @@
-import { DatabaseState, Folder, Page, User, CTF, KanbanBoard, Backup, MediaFile } from '@/types';
+import { Folder, MediaFile, Page } from "@/types";
 
-// Interface para Categoria
-interface Category {
-  id: string;
-  name: string;
-  description?: string;
-  color?: string;
-  icon?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Sistema de banco de dados em memória
-class DatabaseManager {
-  private data: DatabaseState & { categories: Category[] } = {
-    users: [],
-    folders: [],
+// Mock data
+const initialFolders: Folder[] = [
+  {
+    id: 'folder-1',
+    name: 'Documentos',
+    createdAt: new Date().toISOString(),
+    children: [],
     pages: [],
-    comments: [],
-    versions: [],
-    ctfs: [],
-    kanbanBoards: [],
-    backups: [],
-    mediaFiles: [],
-    categories: []
-  };
-
-  private listeners: Set<() => void> = new Set();
-
-  constructor() {
-    this.initializeWithUser();
-    console.log("DatabaseManager: Inicializado");
+    files: [],
+    isPublic: true,
+    hasPassword: false,
+  },
+  {
+    id: 'folder-2',
+    name: 'Imagens',
+    createdAt: new Date().toISOString(),
+    children: [],
+    pages: [],
+    files: [],
+    isPublic: true,
+    hasPassword: false,
+  },
+  {
+    id: 'folder-3',
+    name: 'Videos',
+    createdAt: new Date().toISOString(),
+    children: [],
+    pages: [],
+    files: [],
+    isPublic: true,
+    hasPassword: false,
+  },
+  {
+    id: 'folder-4',
+    name: 'Projetos',
+    createdAt: new Date().toISOString(),
+    children: [],
+    pages: [],
+    files: [],
+    isPublic: true,
+    hasPassword: false,
+  },
+  {
+    id: 'folder-5',
+    name: 'Marketing',
+    createdAt: new Date().toISOString(),
+    children: [],
+    pages: [],
+    files: [],
+    isPublic: true,
+    hasPassword: false,
   }
+];
 
-  // Subscription para atualizações
-  subscribe(callback: () => void) {
-    console.log("DatabaseManager: Nova subscrição adicionada");
-    this.listeners.add(callback);
-    return () => {
-      console.log("DatabaseManager: Subscrição removida");
-      this.listeners.delete(callback);
-    };
+const initialMediaFiles: MediaFile[] = [
+  {
+    id: 'file-1',
+    name: 'imagem_exemplo.jpg',
+    type: 'image',
+    size: 2048,
+    url: 'https://via.placeholder.com/150',
+    uploadedBy: 'user-1',
+    uploadedAt: new Date().toISOString()
+  },
+  {
+    id: 'file-2',
+    name: 'video_exemplo.mp4',
+    type: 'video',
+    size: 10240,
+    url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    uploadedBy: 'user-1',
+    uploadedAt: new Date().toISOString()
+  },
+  {
+    id: 'file-3',
+    name: 'audio_exemplo.mp3',
+    type: 'audio',
+    size: 5120,
+    url: 'https://www.w3schools.com/html/horse.mp3',
+    uploadedBy: 'user-1',
+    uploadedAt: new Date().toISOString()
+  },
+  {
+    id: 'file-4',
+    name: 'documento_exemplo.pdf',
+    type: 'document',
+    size: 4096,
+    url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    uploadedBy: 'user-1',
+    uploadedAt: new Date().toISOString()
   }
+];
 
-  private notify() {
-    console.log("DatabaseManager: Notificando todas as subscrições de mudanças");
-    console.log("DatabaseManager: Número de ouvintes:", this.listeners.size);
-    this.listeners.forEach(callback => callback());
-  }
+class Database {
+  private pages: Page[] = [
+    {
+      id: 'main-page',
+      title: 'Página Principal',
+      content: '<h1>Bem-vindo ao Wiki Empresarial</h1><p>Esta é a página principal do sistema.</p>',
+      isMainPage: true,
+      isPublic: true,
+      hasPassword: false,
+      author: 'Admin',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      tags: [],
+      category: 'Principal'
+    }
+  ];
+  private folders: Folder[] = initialFolders;
+  private mediaFiles: MediaFile[] = initialMediaFiles;
 
-  // Inicializar apenas com usuário admin
-  private initializeWithUser() {
-    this.data.users = [
-      {
-        id: 'user-1',
-        name: 'Admin User',
-        email: 'admin@company.com',
-        role: 'admin',
-        preferences: { theme: 'dark', language: 'pt-BR', notifications: true },
-        favorites: [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-
-    // Todos os outros arrays começam vazios
-    this.data.folders = [];
-    this.data.pages = [];
-    this.data.ctfs = [];
-    this.data.mediaFiles = [];
-    this.data.backups = [];
-    this.data.comments = [];
-    this.data.versions = [];
-    this.data.kanbanBoards = [];
-    this.data.categories = [];
-  }
-
-  // Métodos CRUD para Categorias
-  getCategories(): Category[] {
-    console.log("DatabaseManager: Obtendo categorias");
-    return this.data.categories;
-  }
-
-  createCategory(category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Category {
-    console.log("DatabaseManager: Criando categoria:", category);
-    const newCategory: Category = {
-      ...category,
-      id: `category-${Date.now()}`,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.data.categories.push(newCategory);
-    this.notify();
-    return newCategory;
-  }
-
-  updateCategory(id: string, updates: Partial<Category>): Category | null {
-    console.log("DatabaseManager: Atualizando categoria:", id, updates);
-    const index = this.data.categories.findIndex(c => c.id === id);
-    if (index === -1) return null;
-    
-    this.data.categories[index] = {
-      ...this.data.categories[index],
-      ...updates,
-      updatedAt: new Date()
-    };
-    this.notify();
-    return this.data.categories[index];
-  }
-
-  deleteCategory(id: string): boolean {
-    console.log("DatabaseManager: Excluindo categoria:", id);
-    const index = this.data.categories.findIndex(c => c.id === id);
-    if (index === -1) return false;
-    
-    this.data.categories.splice(index, 1);
-    this.notify();
-    return true;
-  }
-
-  // Métodos CRUD para Pastas
-  getFolders(): Folder[] {
-    console.log("DatabaseManager: Obtendo pastas. Total:", this.data.folders.length);
-    return this.data.folders;
-  }
-
-  createFolder(folder: Omit<Folder, 'id' | 'metadata'>): Folder {
-    console.log("DatabaseManager: Criando pasta:", folder);
-    const newFolder: Folder = {
-      ...folder,
-      id: `folder-${Date.now()}`,
-      metadata: {
-        createdBy: 'user-1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        tags: folder.path.split('/').filter(Boolean)
-      }
-    };
-    this.data.folders.push(newFolder);
-    console.log("DatabaseManager: Pasta criada com ID:", newFolder.id);
-    console.log("DatabaseManager: Total de pastas após criação:", this.data.folders.length);
-    this.notify();
-    return newFolder;
-  }
-
-  updateFolder(id: string, updates: Partial<Folder>): Folder | null {
-    console.log("DatabaseManager: Atualizando pasta:", id, updates);
-    const index = this.data.folders.findIndex(f => f.id === id);
-    if (index === -1) return null;
-    
-    this.data.folders[index] = {
-      ...this.data.folders[index],
-      ...updates,
-      metadata: {
-        ...this.data.folders[index].metadata,
-        updatedAt: new Date()
-      }
-    };
-    this.notify();
-    return this.data.folders[index];
-  }
-
-  deleteFolder(id: string): boolean {
-    console.log("DatabaseManager: Excluindo pasta:", id);
-    const index = this.data.folders.findIndex(f => f.id === id);
-    if (index === -1) return false;
-    
-    this.data.folders.splice(index, 1);
-    console.log("DatabaseManager: Total de pastas após exclusão:", this.data.folders.length);
-    this.notify();
-    return true;
-  }
-
-  // Métodos CRUD para Páginas
-  getPages(): Page[] {
-    return this.data.pages;
-  }
-
-  createPage(pageData: {
-    title: string;
-    content: string;
-    folderId?: string;
-    status?: Page['status'];
-    priority?: Page['priority'];
-    tags?: string[];
-    category?: string;
-  }): Page {
+  // Page methods
+  createPage(page: Omit<Page, 'id' | 'createdAt' | 'updatedAt'>): Page {
     const newPage: Page = {
-      id: `page-${Date.now()}`,
-      title: pageData.title,
-      content: pageData.content,
-      folderId: pageData.folderId,
-      status: pageData.status || 'draft',
-      priority: pageData.priority || 'medium',
-      metadata: {
-        createdBy: 'user-1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        version: 1,
-        tags: pageData.tags || [],
-        category: pageData.category
-      },
-      permissions: { read: ['*'], write: ['admin'], comment: ['*'] },
-      viewCount: 0,
-      isTemplate: false
+      ...page,
+      id: `page-${Date.now()}-${Math.random()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
-    this.data.pages.push(newPage);
-    this.notify();
+    this.pages.push(newPage);
     return newPage;
   }
 
+  getPages(): Page[] {
+    return this.pages;
+  }
+
+  getPagesByFolder(folderId?: string): Page[] {
+    return this.pages.filter(page => page.folderId === folderId);
+  }
+
+  getMainPage(): Page | undefined {
+    return this.pages.find(page => page.isMainPage);
+  }
+
+  getPublicPages(): Page[] {
+    return this.pages.filter(page => page.isPublic && !page.hasPassword);
+  }
+
   updatePage(id: string, updates: Partial<Page>): Page | null {
-    const index = this.data.pages.findIndex(p => p.id === id);
-    if (index === -1) return null;
-    
-    this.data.pages[index] = {
-      ...this.data.pages[index],
-      ...updates,
-      metadata: {
-        ...this.data.pages[index].metadata,
-        updatedAt: new Date(),
-        version: this.data.pages[index].metadata.version + 1
-      }
-    };
-    this.notify();
-    return this.data.pages[index];
+    const index = this.pages.findIndex(page => page.id === id);
+    if (index !== -1) {
+      this.pages[index] = {
+        ...this.pages[index],
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
+      return this.pages[index];
+    }
+    return null;
   }
 
   deletePage(id: string): boolean {
-    const index = this.data.pages.findIndex(p => p.id === id);
-    if (index === -1) return false;
-    
-    this.data.pages.splice(index, 1);
-    this.notify();
-    return true;
+    const index = this.pages.findIndex(page => page.id === id);
+    if (index !== -1) {
+      this.pages.splice(index, 1);
+      return true;
+    }
+    return false;
   }
 
-  // Métodos para CTFs
-  getCTFs(): CTF[] {
-    return this.data.ctfs;
+  // Folder methods
+  getFolders(): Folder[] {
+    return this.folders;
   }
 
-  createCTF(ctf: Omit<CTF, 'id' | 'createdAt' | 'completedBy'>): CTF {
-    const newCTF: CTF = {
-      ...ctf,
-      id: `ctf-${Date.now()}`,
-      createdAt: new Date(),
-      completedBy: []
+  getFolderById(id: string): Folder | undefined {
+    return this.folders.find(folder => folder.id === id);
+  }
+
+  getFoldersByParentId(parentId?: string): Folder[] {
+    return this.folders.filter(folder => folder.parentId === parentId);
+  }
+
+  updateFolder(id: string, updates: Partial<Folder>): Folder | null {
+    const index = this.folders.findIndex(folder => folder.id === id);
+    if (index !== -1) {
+      this.folders[index] = {
+        ...this.folders[index],
+        ...updates
+      };
+      return this.folders[index];
+    }
+    return null;
+  }
+
+  deleteFolder(id: string): boolean {
+    const index = this.folders.findIndex(folder => folder.id === id);
+    if (index !== -1) {
+      this.folders.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  // Media file methods
+  createMediaFile(file: Omit<MediaFile, 'id'>): MediaFile {
+    const newFile: MediaFile = {
+      ...file,
+      id: `file-${Date.now()}-${Math.random()}`
     };
-    this.data.ctfs.push(newCTF);
-    this.notify();
-    return newCTF;
+    this.mediaFiles.push(newFile);
+    return newFile;
   }
 
-  updateCTF(id: string, updates: Partial<CTF>): CTF | null {
-    const index = this.data.ctfs.findIndex(c => c.id === id);
-    if (index === -1) return null;
-    
-    this.data.ctfs[index] = { ...this.data.ctfs[index], ...updates };
-    this.notify();
-    return this.data.ctfs[index];
-  }
-
-  deleteCTF(id: string): boolean {
-    const index = this.data.ctfs.findIndex(c => c.id === id);
-    if (index === -1) return false;
-    
-    this.data.ctfs.splice(index, 1);
-    this.notify();
-    return true;
-  }
-
-  // Métodos para Mídia
   getMediaFiles(): MediaFile[] {
-    return this.data.mediaFiles;
+    return this.mediaFiles;
   }
 
-  createMediaFile(media: Omit<MediaFile, 'id' | 'uploadedAt'>): MediaFile {
-    const newMedia: MediaFile = {
-      ...media,
-      id: `media-${Date.now()}`,
-      uploadedAt: new Date()
-    };
-    this.data.mediaFiles.push(newMedia);
-    this.notify();
-    return newMedia;
+   getMediaFilesByFolder(folderId?: string): MediaFile[] {
+    return this.mediaFiles.filter(file => file.folderId === folderId);
   }
 
   deleteMediaFile(id: string): boolean {
-    const index = this.data.mediaFiles.findIndex(m => m.id === id);
-    if (index === -1) return false;
-    
-    this.data.mediaFiles.splice(index, 1);
-    this.notify();
-    return true;
+    const index = this.mediaFiles.findIndex(file => file.id === id);
+    if (index !== -1) {
+      this.mediaFiles.splice(index, 1);
+      return true;
+    }
+    return false;
   }
 
-  // Sistema de Backup
-  createBackup(name: string, description?: string): Backup {
-    const backup: Backup = {
-      id: `backup-${Date.now()}`,
-      name,
-      description,
-      data: JSON.parse(JSON.stringify(this.data)), // Deep clone
-      createdBy: 'user-1',
-      createdAt: new Date(),
-      size: JSON.stringify(this.data).length,
-      type: 'manual'
+  // Enhanced folder creation with password support
+  createFolder(folder: Omit<Folder, 'id' | 'createdAt' | 'children' | 'pages' | 'files'>): Folder {
+    const newFolder: Folder = {
+      ...folder,
+      id: `folder-${Date.now()}-${Math.random()}`,
+      createdAt: new Date().toISOString(),
+      children: [],
+      pages: [],
+      files: []
     };
-    
-    this.data.backups.push(backup);
-    this.notify();
-    return backup;
+    this.folders.push(newFolder);
+    return newFolder;
   }
 
-  getBackups(): Backup[] {
-    return this.data.backups;
+  // Check folder access
+  canAccessFolder(folderId: string, password?: string): boolean {
+    const folder = this.folders.find(f => f.id === folderId);
+    if (!folder) return false;
+    if (!folder.hasPassword) return true;
+    return folder.password === password;
   }
 
-  restoreBackup(backupId: string): boolean {
-    const backup = this.data.backups.find(b => b.id === backupId);
-    if (!backup) return false;
-    
-    // Manter apenas os backups
-    const currentBackups = this.data.backups;
-    this.data = JSON.parse(JSON.stringify(backup.data));
-    this.data.backups = currentBackups;
-    
-    this.notify();
-    return true;
-  }
-
-  exportBackup(backupId: string): string {
-    const backup = this.data.backups.find(b => b.id === backupId);
-    if (!backup) throw new Error('Backup não encontrado');
-    
-    return JSON.stringify(backup, null, 2);
-  }
-
-  deleteBackup(id: string): boolean {
-    const index = this.data.backups.findIndex(b => b.id === id);
-    if (index === -1) return false;
-    
-    this.data.backups.splice(index, 1);
-    this.notify();
-    return true;
-  }
-
-  // Busca avançada
-  search(query: string, filters?: {
-    type?: 'pages' | 'folders' | 'ctfs';
-    folderId?: string;
-    tags?: string[];
-    status?: string;
-  }): any[] {
-    const results: any[] = [];
-    const lowerQuery = query.toLowerCase();
-    
-    if (!filters?.type || filters.type === 'pages') {
-      const pageResults = this.data.pages.filter(page => 
-        page.title.toLowerCase().includes(lowerQuery) ||
-        page.content.toLowerCase().includes(lowerQuery) ||
-        page.metadata.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
-      );
-      results.push(...pageResults.map(p => ({ ...p, type: 'page' })));
-    }
-    
-    if (!filters?.type || filters.type === 'folders') {
-      const folderResults = this.data.folders.filter(folder =>
-        folder.name.toLowerCase().includes(lowerQuery) ||
-        folder.metadata.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
-      );
-      results.push(...folderResults.map(f => ({ ...f, type: 'folder' })));
-    }
-    
-    if (!filters?.type || filters.type === 'ctfs') {
-      const ctfResults = this.data.ctfs.filter(ctf =>
-        ctf.title.toLowerCase().includes(lowerQuery) ||
-        ctf.description.toLowerCase().includes(lowerQuery) ||
-        ctf.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
-      );
-      results.push(...ctfResults.map(c => ({ ...c, type: 'ctf' })));
-    }
-    
-    return results;
-  }
-
-  // Estatísticas
-  getStats() {
-    console.log("DatabaseManager: Obtendo estatísticas");
-    return {
-      totalFolders: this.data.folders.length,
-      totalPages: this.data.pages.length,
-      totalCTFs: this.data.ctfs.length,
-      totalBackups: this.data.backups.length,
-      totalMediaFiles: this.data.mediaFiles.length,
-      totalCategories: this.data.categories.length,
-      recentPages: this.data.pages
-        .sort((a, b) => new Date(b.metadata.updatedAt).getTime() - new Date(a.metadata.updatedAt).getTime())
-        .slice(0, 5),
-      popularPages: this.data.pages
-        .sort((a, b) => b.viewCount - a.viewCount)
-        .slice(0, 5)
-    };
+  // Check page access
+  canAccessPage(pageId: string, password?: string): boolean {
+    const page = this.pages.find(p => p.id === pageId);
+    if (!page) return false;
+    if (!page.hasPassword) return true;
+    return page.password === password;
   }
 }
 
-export const database = new DatabaseManager();
+export const database = new Database();
