@@ -1,9 +1,10 @@
+
 import React, { useState } from "react";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { Dashboard } from "@/components/Dashboard";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import PageEditor from "@/components/editor/PageEditor";
+import ModernPageEditor from "@/components/editor/ModernPageEditor";
 import AdminSettings from "@/components/settings/AdminSettings";
 import CategoryManager from "@/components/category/CategoryManager";
 import BackupManager from "@/components/backup/BackupManager";
