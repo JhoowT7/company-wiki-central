@@ -1,7 +1,3 @@
-<think>
-
-</think>
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
