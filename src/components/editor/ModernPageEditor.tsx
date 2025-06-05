@@ -147,8 +147,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
       handlePaste: (view, event) => {
         const html = event.clipboardData?.getData('text/html');
         if (html) {
-          // Preserve formatting when pasting
-          return false; // Let TipTap handle it
+          return false;
         }
         return false;
       },
