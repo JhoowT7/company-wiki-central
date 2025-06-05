@@ -319,7 +319,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
     }
   }, [editor]);
 
-  const symbols = ['©', '®', '™', '§', '¶', '†', '‡', '•', '…', '–', '—', '‹', '›', '«', '»', '"', '"', ''', ''', '‚', '„', '‰', '€', '£', '¥', '¢', '₹', '₽', '₩', '₪', '₦', '₡', '₨', '₫', '₱', '₡'];
+  const symbols = ['©', '®', '™', '§', '¶', '†', '‡', '•', '…', '–', '—', '‹', '›', '«', '»', '"', '"', "'", "'", '‚', '„', '‰', '€', '£', '¥', '¢', '₹', '₽', '₩', '₪', '₦', '₡', '₨', '₫', '₱', '₡'];
 
   const handleSave = useCallback(() => {
     if (editor && onSave) {
@@ -355,7 +355,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
 <body>
     ${pageSettings.headerText ? `<header>${pageSettings.headerText}</header>` : ''}
     ${editor.getHTML()}
-    ${pageSettings.footerText ? `<footer>${pageSettings.footerText}</footer` : ''}
+    ${pageSettings.footerText ? `<footer>${pageSettings.footerText}</footer>` : ''}
 </body>
 </html>`;
         break;
@@ -408,14 +408,14 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Document Title"
+              placeholder="Título do Documento"
               className="text-lg font-semibold border-none bg-transparent focus:ring-0 max-w-md"
               style={{ color: editorStyles.color }}
             />
             <div className="flex items-center gap-2">
               {/* Seletor de modo do editor */}
               <Select value={editorMode} onValueChange={(value: 'normal' | 'dark' | 'sepia') => setEditorMode(value)}>
-                <SelectTrigger className="w-24">
+                <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -434,7 +434,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
               </Button>
               <Button variant="outline" size="sm" onClick={handleSave}>
                 <Save className="h-4 w-4 mr-1" />
-                Save
+                Salvar
               </Button>
             </div>
           </div>
@@ -607,18 +607,224 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
                 <Button variant="ghost" size="sm" onClick={clearFormatting}>
                   Clear Format
                 </Button>
-              </div>
 
-              {/* Additional tools */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowFindReplace(!showFindReplace)}
-                >
-                  <Search className="h-4 w-4 mr-1" />
-                  Find & Replace
-                </Button>
+                <Dialog open={showPageSettings} onOpenChange={setShowPageSettings}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Settings className="h-4 w-4 mr-1" />
+                      Personalização
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Configurações da Página</DialogTitle>
+                    </DialogHeader>
+                    <Tabs defaultValue="layout" className="w-full">
+                      <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="layout">Layout</TabsTrigger>
+                        <TabsTrigger value="typography">Tipografia</TabsTrigger>
+                        <TabsTrigger value="colors">Cores</TabsTrigger>
+                        <TabsTrigger value="advanced">Avançado</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="layout" className="space-y-4">
+                        <div>
+                          <Label>Margens (cm)</Label>
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            <Input
+                              type="number"
+                              placeholder="Superior"
+                              value={pageSettings.marginTop}
+                              onChange={(e) => setPageSettings(prev => ({ ...prev, marginTop: parseFloat(e.target.value) || 0 }))}
+                            />
+                            <Input
+                              type="number"
+                              placeholder="Inferior"
+                              value={pageSettings.marginBottom}
+                              onChange={(e) => setPageSettings(prev => ({ ...prev, marginBottom: parseFloat(e.target.value) || 0 }))}
+                            />
+                            <Input
+                              type="number"
+                              placeholder="Esquerda"
+                              value={pageSettings.marginLeft}
+                              onChange={(e) => setPageSettings(prev => ({ ...prev, marginLeft: parseFloat(e.target.value) || 0 }))}
+                            />
+                            <Input
+                              type="number"
+                              placeholder="Direita"
+                              value={pageSettings.marginRight}
+                              onChange={(e) => setPageSettings(prev => ({ ...prev, marginRight: parseFloat(e.target.value) || 0 }))}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>Tamanho do Papel</Label>
+                          <Select
+                            value={pageSettings.paperSize}
+                            onValueChange={(value: 'A4' | 'Letter' | 'Legal') => setPageSettings(prev => ({ ...prev, paperSize: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="A4">A4</SelectItem>
+                              <SelectItem value="Letter">Carta</SelectItem>
+                              <SelectItem value="Legal">Ofício</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Orientação</Label>
+                          <Select
+                            value={pageSettings.pageOrientation}
+                            onValueChange={(value: 'portrait' | 'landscape') => setPageSettings(prev => ({ ...prev, pageOrientation: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="portrait">Retrato</SelectItem>
+                              <SelectItem value="landscape">Paisagem</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Colunas</Label>
+                          <Select
+                            value={pageSettings.columns.toString()}
+                            onValueChange={(value) => setPageSettings(prev => ({ ...prev, columns: parseInt(value) }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">1 Coluna</SelectItem>
+                              <SelectItem value="2">2 Colunas</SelectItem>
+                              <SelectItem value="3">3 Colunas</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="typography" className="space-y-4">
+                        <div>
+                          <Label>Família da Fonte</Label>
+                          <Select
+                            value={pageSettings.fontFamily}
+                            onValueChange={(value) => setPageSettings(prev => ({ ...prev, fontFamily: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Inter">Inter</SelectItem>
+                              <SelectItem value="Arial">Arial</SelectItem>
+                              <SelectItem value="Georgia">Georgia</SelectItem>
+                              <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                              <SelectItem value="Helvetica">Helvetica</SelectItem>
+                              <SelectItem value="Roboto">Roboto</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Tamanho da Fonte</Label>
+                          <Slider
+                            value={[pageSettings.fontSize]}
+                            onValueChange={(value) => setPageSettings(prev => ({ ...prev, fontSize: value[0] }))}
+                            max={32}
+                            min={8}
+                            step={1}
+                            className="mt-2"
+                          />
+                          <span className="text-sm text-muted-foreground">{pageSettings.fontSize}px</span>
+                        </div>
+
+                        <div>
+                          <Label>Altura da Linha</Label>
+                          <Slider
+                            value={[pageSettings.lineHeight]}
+                            onValueChange={(value) => setPageSettings(prev => ({ ...prev, lineHeight: value[0] }))}
+                            max={3}
+                            min={1}
+                            step={0.1}
+                            className="mt-2"
+                          />
+                          <span className="text-sm text-muted-foreground">{pageSettings.lineHeight}</span>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="colors" className="space-y-4">
+                        <div>
+                          <Label>Cor de Fundo</Label>
+                          <Input
+                            type="color"
+                            value={pageSettings.backgroundColor}
+                            onChange={(e) => setPageSettings(prev => ({ ...prev, backgroundColor: e.target.value }))}
+                            className="w-full h-10 mt-2"
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Cor do Texto</Label>
+                          <Input
+                            type="color"
+                            value={pageSettings.textColor}
+                            onChange={(e) => setPageSettings(prev => ({ ...prev, textColor: e.target.value }))}
+                            className="w-full h-10 mt-2"
+                          />
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="advanced" className="space-y-4">
+                        <div>
+                          <Label>Texto do Cabeçalho</Label>
+                          <Input
+                            value={pageSettings.headerText}
+                            onChange={(e) => setPageSettings(prev => ({ ...prev, headerText: e.target.value }))}
+                            placeholder="Texto para aparecer no topo de cada página"
+                          />
+                        </div>
+
+                        <div>
+                          <Label>Texto do Rodapé</Label>
+                          <Input
+                            value={pageSettings.footerText}
+                            onChange={(e) => setPageSettings(prev => ({ ...prev, footerText: e.target.value }))}
+                            placeholder="Texto para aparecer no rodapé de cada página"
+                          />
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="page-numbers"
+                            checked={pageSettings.showPageNumbers}
+                            onCheckedChange={(checked) => setPageSettings(prev => ({ ...prev, showPageNumbers: checked }))}
+                          />
+                          <Label htmlFor="page-numbers">Mostrar números de página</Label>
+                        </div>
+
+                        {pageSettings.columns > 1 && (
+                          <div>
+                            <Label>Espaçamento entre Colunas (cm)</Label>
+                            <Slider
+                              value={[pageSettings.columnGap]}
+                              onValueChange={(value) => setPageSettings(prev => ({ ...prev, columnGap: value[0] }))}
+                              max={5}
+                              min={0.5}
+                              step={0.1}
+                              className="mt-2"
+                            />
+                            <span className="text-sm text-muted-foreground">{pageSettings.columnGap}cm</span>
+                          </div>
+                        )}
+                      </TabsContent>
+                    </Tabs>
+                  </DialogContent>
+                </Dialog>
 
                 <Dialog open={showSymbolDialog} onOpenChange={setShowSymbolDialog}>
                   <DialogTrigger asChild>
@@ -650,6 +856,15 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
                   </DialogContent>
                 </Dialog>
 
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFindReplace(!showFindReplace)}
+                >
+                  <Search className="h-4 w-4 mr-1" />
+                  Find & Replace
+                </Button>
+
                 <Button variant="ghost" size="sm" onClick={insertDate}>
                   <Calendar className="h-4 w-4 mr-1" />
                   Date
@@ -659,81 +874,6 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
                   <Clock className="h-4 w-4 mr-1" />
                   Time
                 </Button>
-
-                <Dialog open={showPageSettings} onOpenChange={setShowPageSettings}>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Settings className="h-4 w-4 mr-1" />
-                      Page Settings
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Page Settings</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Margins (cm)</Label>
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          <Input
-                            type="number"
-                            placeholder="Top"
-                            value={pageSettings.marginTop}
-                            onChange={(e) => setPageSettings(prev => ({ ...prev, marginTop: parseFloat(e.target.value) || 0 }))}
-                          />
-                          <Input
-                            type="number"
-                            placeholder="Bottom"
-                            value={pageSettings.marginBottom}
-                            onChange={(e) => setPageSettings(prev => ({ ...prev, marginBottom: parseFloat(e.target.value) || 0 }))}
-                          />
-                          <Input
-                            type="number"
-                            placeholder="Left"
-                            value={pageSettings.marginLeft}
-                            onChange={(e) => setPageSettings(prev => ({ ...prev, marginLeft: parseFloat(e.target.value) || 0 }))}
-                          />
-                          <Input
-                            type="number"
-                            placeholder="Right"
-                            value={pageSettings.marginRight}
-                            onChange={(e) => setPageSettings(prev => ({ ...prev, marginRight: parseFloat(e.target.value) || 0 }))}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label>Font Size</Label>
-                        <Slider
-                          value={[pageSettings.fontSize]}
-                          onValueChange={(value) => setPageSettings(prev => ({ ...prev, fontSize: value[0] }))}
-                          max={24}
-                          min={8}
-                          step={1}
-                          className="mt-2"
-                        />
-                        <span className="text-sm text-muted-foreground">{pageSettings.fontSize}px</span>
-                      </div>
-
-                      <div>
-                        <Label>Columns</Label>
-                        <Select
-                          value={pageSettings.columns.toString()}
-                          onValueChange={(value) => setPageSettings(prev => ({ ...prev, columns: parseInt(value) }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1 Column</SelectItem>
-                            <SelectItem value="2">2 Columns</SelectItem>
-                            <SelectItem value="3">3 Columns</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
 
                 <div className="flex items-center gap-1">
                   <Button
@@ -816,7 +956,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
             <div className="border-t p-4 text-center text-sm text-muted-foreground">
               {pageSettings.footerText}
               {pageSettings.showPageNumbers && (
-                <span className="ml-4">Page 1</span>
+                <span className="ml-4">Página 1</span>
               )}
             </div>
           )}
