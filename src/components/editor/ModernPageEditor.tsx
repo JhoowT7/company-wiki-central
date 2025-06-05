@@ -25,7 +25,7 @@ import {
   Image as ImageIcon, Video, Link as LinkIcon, Table as TableIcon, Plus, Save,
   Eye, EyeOff, Maximize, ArrowLeft, Palette, Type, Highlighter, FileDown,
   CheckSquare, Upload, FileText, Globe, Lock, Minus, Printer, Settings,
-  Download, FileImage, Music, Film, Smile, Indent, Outdent, RotateCcw, RotateClockwise,
+  Download, FileImage, Music, Film, Smile, Indent, Outdent, RotateCcw, RotateCw,
   Columns, Bookmark, MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -158,7 +158,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
           color: ${pageSettings.textColor};
           background-color: ${pageSettings.backgroundColor};
           margin: ${pageSettings.marginTop}cm ${pageSettings.marginRight}cm ${pageSettings.marginBottom}cm ${pageSettings.marginLeft}cm;
-          max-width: ${pageSettings.paperSize === 'A4' ? '21cm' : pageSettings.paperSize === 'Letter' ? '8.5in' : '100%'};
+          max-width: ${pageSettings.paperSize === 'A4' ? '21cm' : pageSettings.paperSize === 'Letter' ? '8.5in' : '100%'}; 
         `
       },
       handlePaste: (view, event, slice) => {
@@ -838,7 +838,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
                   onClick={() => editor.chain().focus().redo().run()}
                   disabled={!editor.can().redo()}
                 >
-                  <RotateClockwise className="h-4 w-4" />
+                  <RotateCw className="h-4 w-4" />
                 </Button>
               </div>
             </TabsContent>
@@ -1017,7 +1017,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
                         className="w-full justify-start"
                         onClick={insertPageBreak}
                       >
-                        <PageBreak className="h-4 w-4 mr-2" />
+                        <Minus className="h-4 w-4 mr-2" />
                         Quebra de página
                       </Button>
                     </div>
