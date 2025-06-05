@@ -40,6 +40,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface ModernPageEditorProps {
   initialContent?: string;
@@ -54,13 +55,45 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
 }) => {
   const [title, setTitle] = useState(initialTitle);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [editorMode, setEditorMode] = useState<'normal' | 'dark' | 'sepia'>('normal');
   const [searchTerm, setSearchTerm] = useState('');
   const [replaceTerm, setReplaceTerm] = useState('');
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [showPageSettings, setShowPageSettings] = useState(false);
   const [showInsertDialog, setShowInsertDialog] = useState(false);
   const [showSymbolDialog, setShowSymbolDialog] = useState(false);
+  
+  const { theme } = useTheme();
+
+  // Definir cores baseadas no modo do editor e tema global
+  const getEditorStyles = () => {
+    switch (editorMode) {
+      case 'dark':
+        return {
+          backgroundColor: '#1a1a1a',
+          color: '#e5e5e5',
+          borderColor: '#374151'
+        };
+      case 'sepia':
+        return {
+          backgroundColor: '#f4f1e8',
+          color: '#5c4b37',
+          borderColor: '#d4c5a9'
+        };
+      default: // normal
+        return theme === 'dark' ? {
+          backgroundColor: '#ffffff',
+          color: '#000000',
+          borderColor: '#e5e7eb'
+        } : {
+          backgroundColor: '#ffffff',
+          color: '#000000',
+          borderColor: '#e5e7eb'
+        };
+    }
+  };
+
+  const editorStyles = getEditorStyles();
   
   // Page settings
   const [pageSettings, setPageSettings] = useState({
@@ -78,9 +111,19 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
     showPageNumbers: true,
     pageOrientation: 'portrait' as 'portrait' | 'landscape',
     paperSize: 'A4' as 'A4' | 'Letter' | 'Legal',
-    backgroundColor: '#ffffff',
-    textColor: '#000000'
+    backgroundColor: editorStyles.backgroundColor,
+    textColor: editorStyles.color
   });
+
+  // Atualizar configurações da página quando o modo do editor mudar
+  useEffect(() => {
+    const styles = getEditorStyles();
+    setPageSettings(prev => ({
+      ...prev,
+      backgroundColor: styles.backgroundColor,
+      textColor: styles.color
+    }));
+  }, [editorMode, theme]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -141,6 +184,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
           line-height: ${pageSettings.lineHeight};
           color: ${pageSettings.textColor};
           background-color: ${pageSettings.backgroundColor};
+          border: 1px solid ${editorStyles.borderColor};
           ${pageSettings.columns > 1 ? `column-count: ${pageSettings.columns}; column-gap: ${pageSettings.columnGap}cm;` : ''}
         `,
       },
@@ -213,7 +257,6 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
       if (file.type.startsWith('image/')) {
         editor.chain().focus().setImage({ src: url, alt: file.name }).run();
       } else {
-        // Handle other file types as needed
         toast({
           title: "Unsupported File",
           description: "Only images are supported for now.",
@@ -233,7 +276,6 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
     if (url) {
       let videoId = '';
       
-      // Extrair ID do vídeo do YouTube
       const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
       const match = url.match(regex);
       
@@ -318,7 +360,6 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
 </html>`;
         break;
       case 'markdown':
-        // Basic HTML to Markdown conversion
         content = editor.getText();
         filename = `${title || 'document'}.md`;
         break;
@@ -353,9 +394,15 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
   }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-white'}`}>
+    <div 
+      className="min-h-screen"
+      style={{ 
+        backgroundColor: editorStyles.backgroundColor,
+        color: editorStyles.color 
+      }}
+    >
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <div className="border-b backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50" style={{ borderColor: editorStyles.borderColor }}>
         <div className="container mx-auto px-4 py-2">
           <div className="flex items-center justify-between mb-2">
             <Input
@@ -363,15 +410,21 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Document Title"
               className="text-lg font-semibold border-none bg-transparent focus:ring-0 max-w-md"
+              style={{ color: editorStyles.color }}
             />
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsDarkMode(!isDarkMode)}
-              >
-                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
+              {/* Seletor de modo do editor */}
+              <Select value={editorMode} onValueChange={(value: 'normal' | 'dark' | 'sepia') => setEditorMode(value)}>
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="dark">Escuro</SelectItem>
+                  <SelectItem value="sepia">Sépia</SelectItem>
+                </SelectContent>
+              </Select>
+              
               <Button
                 variant="ghost"
                 size="sm"
@@ -740,9 +793,10 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
       {/* Editor Content */}
       <div className="container mx-auto px-4 py-8">
         <div 
-          className="bg-white shadow-lg rounded-lg overflow-hidden"
+          className="shadow-lg rounded-lg overflow-hidden"
           style={{
             backgroundColor: pageSettings.backgroundColor,
+            border: `1px solid ${editorStyles.borderColor}`
           }}
         >
           {pageSettings.headerText && (
