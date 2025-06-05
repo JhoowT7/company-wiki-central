@@ -1,3 +1,7 @@
+<think>
+
+</think>
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -273,7 +277,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
 
   const handleYouTubeInsert = () => {
     const url = prompt('Cole o link do YouTube:');
-    if (url) {
+    if (url && editor) {
       let videoId = '';
       
       const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
@@ -281,7 +285,11 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
       
       if (match) {
         videoId = match[1];
-        editor.chain().focus().setYoutube({ src: videoId }).run();
+        editor.commands.setYoutubeVideo({
+          src: `https://www.youtube.com/watch?v=${videoId}`,
+          width: 640,
+          height: 480,
+        });
         
         toast({
           title: "Vídeo do YouTube inserido!",
@@ -582,6 +590,14 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <ImageIcon className="h-4 w-4" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleYouTubeInsert}
+                >
+                  <Film className="h-4 w-4" />
                 </Button>
 
                 <Dialog open={showInsertDialog} onOpenChange={setShowInsertDialog}>
