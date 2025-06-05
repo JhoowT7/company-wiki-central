@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -26,8 +25,8 @@ import {
   Image as ImageIcon, Video, Link as LinkIcon, Table as TableIcon, Plus, Save,
   Eye, EyeOff, Maximize, ArrowLeft, Palette, Type, Highlighter, FileDown,
   CheckSquare, Upload, FileText, Globe, Lock, Minus, Printer, Settings,
-  Download, FileImage, Music, Film, Smile, Indent, Outdent, RotateCcw, RotateContent,
-  Columns, Header, Footer, PageBreak, Bookmark, MessageSquare
+  Download, FileImage, Music, Film, Smile, Indent, Outdent, RotateCcw, RotateClockwise,
+  Columns, Bookmark, MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -289,7 +288,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
       if (editor?.state.selection.empty) {
         editor?.chain().focus().insertContent(`<a href="${linkUrl}">${linkUrl}</a>`).run();
       } else {
-        editor?.chain().focus().setLink({ href: linkUrl }).run();
+        editor?.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run();
       }
       setLinkUrl('');
     }
@@ -839,7 +838,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
                   onClick={() => editor.chain().focus().redo().run()}
                   disabled={!editor.can().redo()}
                 >
-                  <RotateContent className="h-4 w-4" />
+                  <RotateClockwise className="h-4 w-4" />
                 </Button>
               </div>
             </TabsContent>
