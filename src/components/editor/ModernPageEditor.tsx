@@ -65,7 +65,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
   
   const { theme } = useTheme();
 
-  // Definir cores baseadas no modo do editor e tema global
+  // Definir cores baseadas no modo do editor
   const getEditorStyles = () => {
     switch (editorMode) {
       case 'dark':
@@ -80,11 +80,11 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
           color: '#5c4b37',
           borderColor: '#d4c5a9'
         };
-      default: // normal
+      default: // normal - adapta ao tema do sistema
         return theme === 'dark' ? {
-          backgroundColor: '#ffffff',
-          color: '#000000',
-          borderColor: '#e5e7eb'
+          backgroundColor: '#1a1a1a',
+          color: '#e5e5e5',
+          borderColor: '#374151'
         } : {
           backgroundColor: '#ffffff',
           color: '#000000',
