@@ -14,20 +14,21 @@ import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import Link from '@tiptap/extension-link';
 import { useDropzone } from 'react-dropzone';
 import { 
   Bold, Italic, Strikethrough, Underline, Code, Quote, List, ListOrdered,
   Heading1, Heading2, Heading3, AlignLeft, AlignCenter, AlignRight,
-  Image as ImageIcon, Video, Link, Table as TableIcon, Plus, Save,
+  Image as ImageIcon, Video, Link as LinkIcon, Table as TableIcon, Plus, Save,
   Eye, EyeOff, Maximize, ArrowLeft, Palette, Type, Highlighter,
-  CheckSquare, Separator, Upload, FileText, Globe, Lock
+  CheckSquare, Upload, FileText, Globe, Lock, Minus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Separator as UISeparator } from '@/components/ui/separator';
+import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTheme } from '@/components/ThemeProvider';
@@ -90,6 +91,12 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
       Youtube.configure({
         controls: false,
         nocookie: true
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-primary underline',
+        },
       }),
       Table.configure({
         resizable: true
@@ -199,7 +206,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
 
   const insertLink = () => {
     if (linkUrl) {
-      editor?.chain().focus().setLink({ href: linkUrl }).run();
+      editor?.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run();
       setLinkUrl('');
     }
   };
@@ -344,7 +351,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
               {isPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
             
-            <UISeparator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-6" />
             
             <Button variant="outline" onClick={onCancel}>
               Cancelar
@@ -384,7 +391,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
               <Strikethrough className="h-4 w-4" />
             </Button>
             
-            <UISeparator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
             
             {/* Headings */}
             <Button
@@ -411,7 +418,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
               <Heading3 className="h-4 w-4" />
             </Button>
             
-            <UISeparator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
             
             {/* Lists */}
             <Button
@@ -438,7 +445,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
               <CheckSquare className="h-4 w-4" />
             </Button>
             
-            <UISeparator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
             
             {/* Alignment */}
             <Button
@@ -465,7 +472,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
               <AlignRight className="h-4 w-4" />
             </Button>
             
-            <UISeparator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
             
             {/* Colors */}
             <Popover>
@@ -506,7 +513,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
               </PopoverContent>
             </Popover>
             
-            <UISeparator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
             
             {/* Media */}
             <input
@@ -552,7 +559,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm">
-                  <Link className="h-4 w-4" />
+                  <LinkIcon className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -580,7 +587,7 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
               <TableIcon className="h-4 w-4" />
             </Button>
             
-            <UISeparator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
             
             {/* Callouts */}
             <Popover>
@@ -623,14 +630,15 @@ const ModernPageEditor: React.FC<ModernPageEditorProps> = ({
                   >
                     ❌ Erro
                   </Button>
-                  <UISeparator />
+                  <Separator />
                   <Button
                     variant="ghost"
                     size="sm"
                     className="w-full justify-start"
                     onClick={() => editor.chain().focus().setHorizontalRule().run()}
                   >
-                    ➖ Separador
+                    <Minus className="h-4 w-4 mr-2" />
+                    Separador
                   </Button>
                 </div>
               </PopoverContent>
